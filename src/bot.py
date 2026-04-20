@@ -1,11 +1,24 @@
 import discord
 from discord.ext import commands
 from collections import Counter
-import re
-import requests
 import os
-import random
-from dotenv import load_dotenv  # Importar dotenv
+from config import TOKEN
+
+class MikiBot(commands.Bot):
+    def __init__(self):
+        intents = discord.Intents.default()
+        intents.message_content = True
+        super().__init__(command_prefix="!", intents=intents)
+
+    async def setup_hook(self):
+        # carga de modulos
+        for filename in os.listdir("./src/modules"):
+            if filename.endswith(".py") and filename != "__init__.py":
+                await self.load_extension(f'modules.{filename[:-3]}')
+                print(f" Módulo '{filename}' cargado exitosamente.")
+bot = MikiBot()
+bot.run(TOKEN)
+
 
 # Cargar variables de entorno desde .env
 load_dotenv()
