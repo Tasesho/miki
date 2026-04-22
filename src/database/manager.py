@@ -9,7 +9,7 @@ class DBManager:
     def create_tables(self):
         with self.conn:
             self.conn.execute ("""
-                CREATE TABLE IF NOT EXIST users (
+                CREATE TABLE IF NOT EXISTS users (
                 user_id TEXT PRIMARY KEY,
                 city TEXT
             )
