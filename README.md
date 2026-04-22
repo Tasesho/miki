@@ -1,6 +1,6 @@
 # (´・ω・`) Discord Bot Miki
 
-![Version](https://img.shields.io/badge/version-1.1.1-blue)
+![Version](https://img.shields.io/badge/version-1.2.0-blue)
 ![Python](https://img.shields.io/badge/python-3.11+-green)
 ![Discord.py](https://img.shields.io/badge/discord.py-2.0+-purple)
 
@@ -184,7 +184,7 @@ miki/
 
 For all versions, new features and bugfixes, see [CHANGELOG.md](CHANGELOG.md).
 
-**Current Version**: 1.1.1
+**Current Version**: 1.2.0
 
 ## (๑•́ ω •̀๑) Development
 
