@@ -1,1 +1,10 @@
+# Crea un .gitignore rápido y efectivo
+cat <<EOF > .gitignore
 .env
+__pycache__/
+*.py[cod]
+*$py.class
+*.db
+.vscode/
+venv/
+EOF
