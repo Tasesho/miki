@@ -1,17 +1,22 @@
-# Changelog de BOT_MIKI  
+# Changelog de BOT_MIKI
 
-Este documento registra todas las versiones de **BOT_MIKI** y sus cambios.  
+This document records all versions of **BOT_MIKI** and its changes.
+
+## [1.2.0] - 2026-04-22
+- Deep update of documentation with detailed Docker installation.
+- Improvement in README structure with navigable table of contents.
+- Refactoring of development and configuration documentation.
 
 ## [1.1.1] - 2025-02-28
-- Bugfix: now !gif command works as intented
+- Bugfix: now !gif command works as intended
 ## [1.1.0] - 2025-02-28
-- Añadido comando `!clima` para mostrar el clima actual de una ciudad usando la API de WeatherAPI.
-- Añadido comando `!gif` para buscar y mostrar un GIF usando la API de Giphy, con resultados en un **embed** atractivo.
-## [1.0.0] - 2025-02-28  
-- Primera versión estable de **BOT_MIKI**.  
+- Added `!clima` command to display current weather of a city using WeatherAPI.
+- Added `!gif` command to search and display GIFs using Giphy API, with attractive **embed** results.
+## [1.0.0] - 2025-02-28
+- First stable version of **BOT_MIKI**.
 
----  
+---
 
-## 📌 GitHub  
-Puedes encontrar el código en:  
-[Mi GitHub](https://github.com/Tasesho)  
+## 📌 GitHub
+You can find the code at:
+[My GitHub](https://github.com/Tasesho)  
