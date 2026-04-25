@@ -1,6 +1,6 @@
 # (´・ω・`) Discord Bot Miki
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue)
+![Version](https://img.shields.io/badge/version-1.3.0-blue)
 ![Python](https://img.shields.io/badge/python-3.11+-green)
 ![Discord.py](https://img.shields.io/badge/discord.py-2.0+-purple)
 
@@ -22,9 +22,11 @@
 ## (´▽｀)ノ Features
 
 - (๑•́ ω •̀๑) **Interactive Commands**: Multiple commands with `!` prefix
+- (´・ω・`) **User Profiles & XP System**: Earn XP, level up, and showcase your Discord profile with social media links
+- ✨ **Social Media Integration**: Link your Twitter, GitHub, Instagram, and website to your profile
 - (´・ω・`) **Weather API Integration**: Check real-time weather
 - (´▽｀) **Giphy API Integration**: Search and share GIFs
-- o(´▽｀)ノ **SQLite Database**: Data persistence
+- o(´▽｀)ノ **SQLite Database**: Persistent data storage with Docker volume support
 - (´・_・`) **Docker Ready**: Easy deployment with Docker Compose
 - (´▽｀) **Modular Architecture**: Organized and maintainable code
 - (´・ω・`) **Word Statistics**: Message analysis in channels
@@ -146,6 +148,7 @@ Miki responds to the following commands (prefix `!`):
 
 | Command | Description |
 |---------|-------------|
+| `!perfil [@usuario]` | View your profile or another user's profile with XP, levels, and social media links |
 | `!historial` | Shows the 10 most repeated words in the last 100 messages |
 | `!say <text>` | Repeats the message you send |
 | `!gravity` | Shows a basketball basket GIF |
@@ -184,7 +187,7 @@ miki/
 
 For all versions, new features and bugfixes, see [CHANGELOG.md](CHANGELOG.md).
 
-**Current Version**: 1.2.0
+**Current Version**: 1.3.0
 
 ## (๑•́ ω •̀๑) Development
 
