@@ -1,0 +1,9 @@
+services:
+  miki-bot:
+    build: .
+    container_name: miki_bot
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./src/database:/app/src/database  # Persistencia para tu SQLite
