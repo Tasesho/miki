@@ -44,44 +44,56 @@ class Basic(commands.Cog):
     @commands.command()
     async def ayuda(self, ctx):
         embed = discord.Embed(
-            title="[INFO] Comandos Disponibles",
-            description="Aquí están todas las funcionalidades de Miki",
+            title="[INFO] (´▽`) Comandos Disponibles",
+            description="Aquí están todas las funcionalidades de Miki (´・ω・`)",
             color=discord.Color.from_rgb(100, 150, 255)
         )
         
         embed.add_field(
-            name="[GIF] Búsqueda de GIFs",
+            name="[GIF] (´▽`)ノ Búsqueda de GIFs",
             value="**!gif <búsqueda>**\nBusca un GIF aleatorio (Ex: !gif anime)\n_ _",
             inline=False
         )
         
         embed.add_field(
-            name="[CLIMA] Estado del Clima",
-            value="**!clima <ciudad> [país]**\nObtén el clima actual (Default: Chile)\nEj: !clima Santiago o !clima Barcelona España\n_ _",
+            name="[CLIMA] (´・_・`) Estado del Clima",
+            value="**!clima <ciudad> [país]** / **!tiempo <ciudad>**\nObtén el clima actual (Default: Chile)\nEj: !tiempo Barcelona o !clima Santiago Chile\n_ _",
             inline=False
         )
         
         embed.add_field(
-            name="[*] Perfil de Usuario",
+            name="[PROFILE] (๑•́ ω •̀๑) Tu Perfil",
             value="**!perfil [@usuario]**\nVe tu perfil o el de otro usuario con XP y redes sociales\nPrimera vez: Configura tus redes por DM automáticamente\n_ _",
             inline=False
         )
         
         embed.add_field(
-            name="[+] Sistema de XP",
+            name="[MODS] (ง'̀-'́)ง Herramientas de Moderación",
+            value="**!clear <numero>** (´▽`) Solo admins\nBorra los últimos N mensajes (máx: 100)\nPrueba: !clear 5\n_ _",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="[FORTUNA] (´▽`) Fortuna del Día",
+            value="El bot envía frases de sabiduría cada 6 horas en general\nSon mensajes automáticos para motivarte (´▽`)\n_ _",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="[XP] (๑•́ ω •̀๑) Sistema de Experiencia",
             value="Ganas **10 XP por mensaje** (cooldown: 60 segundos)\nFormula: Nivel actual × 100 = XP para siguiente nivel\nRecibe notificación automática al subir de nivel\n_ _",
             inline=False
         )
         
         embed.add_field(
-            name="[~] Historial de Palabras",
+            name="[STATS] (´・_・`) Historial de Palabras",
             value="**!historial**\nMuestra las 10 palabras más repetidas (últimos 100 msgs)\n_ _",
             inline=False
         )
         
         embed.add_field(
-            name="[*] Herramientas Generales",
-            value="**!say <mensaje>** - Repite tu mensaje\n**!presentarse** - Presentación de Miki\n**!talk** - Saludo aleatorio\n**!ayuda** - Esta lista\n_ _",
+            name="[TOOLS] (´▽`)ノ Herramientas Generales",
+            value="**!say <mensaje>** - Repite tu mensaje\n**!presentarse** - Presentación de Miki\n**!talk** - Saludo aleatorio\n**!testdm** - Prueba de mensaje directo\n**!ayuda** - Esta lista\n_ _",
             inline=False
         )
         
