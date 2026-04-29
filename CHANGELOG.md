@@ -2,6 +2,31 @@
 
 This document records all versions of **BOT_MIKI** and its changes.
 
+## [1.6.0] - 2026-04-29
+- **Refactor**: `fortune_loop` now uses a synonym list (`general`, `chat`, `lobby`) for smarter channel detection.
+- **Fix**: The bot no longer sends fortune messages to incorrect channels if a "general" channel is not found.
+- **Fix**: Corrected silent syntax errors in the `events.py` module that could prevent loops from running.
+- **Docs**: Updated `README.md` and `!ayuda` command to reflect all current features and commands.
+- **Docs**: Added a note in `README.md` about the future migration to Slash Commands.
+
+## [1.5.0] - 2026-04-28
+- **New Command**: `!tiempo <city>` - Alternative weather command for better accessibility
+- **New Command**: `!clear <numero>` - Admin-only moderation tool to bulk delete messages (max: 100)
+- **New Feature**: `fortune_loop` - Random wisdom/fortunes sent to #general every 6 hours
+- **Enhancement**: Fixed bot self-response issues - now correctly ignores its own messages
+- **Enhancement**: Daily leaderboard now sends only to #general channel at 12 AM
+- **Enhancement**: Improved message tracking and user activity detection
+- **Moderation**: Added proper permission checks for admin commands
+- **Documentation**: Updated README and help command with new features
+
+## [1.4.0] - 2026-04-26
+- **New Feature**: Periodic activity triggers - Bot sends engagement alerts every 30 minutes of channel inactivity
+- **New Feature**: Daily leaderboard - Automatic Top 10 ranking display at midnight (12 AM) with user levels and XP
+- **Enhancement**: Activity tracking system to monitor last message in each channel
+- **Enhancement**: Smart trigger logic - Bot won't send alerts if it was the last one to message
+- **Enhancement**: Customizable alert messages with bot personality emojis
+- **Database**: New method `get_leaderboard()` to fetch ranked user data efficiently
+
 ## [1.3.0] - 2026-04-25
 - **New Feature**: User profile system with XP levels and rank progression
 - **New Command**: `!perfil` - View and configure user profiles with social media links

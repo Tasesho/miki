@@ -38,5 +38,41 @@ class Weather(commands.Cog):
         else:
             await ctx.send(f" No pude encontrar la ciudad: **{ciudad}**")
 
+class Moderation(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.command(name="clear", help="Borra los últimos N mensajes del canal")
+    @commands.has_permissions(administrator=True)
+    @commands.bot_has_permissions(manage_messages=True)
+    async def clear(self, ctx, numero: int):
+        """
+        Borra los últimos N mensajes del canal (incluye el comando)
+        Solo funciona si el usuario es administrador
+        El bot necesita permiso de 'Manage Messages'
+        """
+        # Validar que el número sea positivo
+        if numero <= 0:
+            await ctx.send("(´；ω；`) El número debe ser mayor a 0")
+            return
+        
+        # Limitar a máximo 100 mensajes por seguridad
+        if numero > 100:
+            await ctx.send("(´；ω；`) El máximo es 100 mensajes")
+            numero = 100
+        
+        try:
+            # Borrar N+1 mensajes (N + el mensaje del comando)
+            deleted = await ctx.channel.purge(limit=numero + 1)
+            
+            # Enviar confirmación (este mensaje se autoborra en 3 segundos)
+            confirmation = await ctx.send(f"(´▽`) Borrados {len(deleted) - 1} mensajes")
+            await confirmation.delete(delay=3)
+        except discord.Forbidden:
+            await ctx.send("(´；ω；`) No tengo permisos para borrar mensajes en este canal")
+        except Exception as e:
+            await ctx.send(f"(´；ω；`) Error: {e}")
+
 async def setup(bot):
     await bot.add_cog(Weather(bot))
+    await bot.add_cog(Moderation(bot))

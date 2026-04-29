@@ -103,5 +103,26 @@ class DBManager:
                 (twitter, github, instagram, website, discord_id)
             )
             await db.commit()
+    
+    async def get_leaderboard(self, limit=10):
+        """Obtiene el leaderboard de usuarios ordenados por nivel y XP"""
+        async with aiosqlite.connect(self.db_path) as db:
+            async with db.execute(
+                """SELECT discord_id, username, nivel, xp 
+                   FROM usuarios 
+                   ORDER BY nivel DESC, xp DESC 
+                   LIMIT ?""",
+                (limit,)
+            ) as cursor:
+                rows = await cursor.fetchall()
+                leaderboard = []
+                for row in rows:
+                    leaderboard.append({
+                        'discord_id': row[0],
+                        'username': row[1],
+                        'nivel': row[2],
+                        'xp': row[3]
+                    })
+                return leaderboard
 
 

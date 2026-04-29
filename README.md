@@ -1,6 +1,6 @@
 # (´・ω・`) Discord Bot Miki
 
-![Version](https://img.shields.io/badge/version-1.3.0-blue)
+![Version](https://img.shields.io/badge/version-1.5.0-blue)
 ![Python](https://img.shields.io/badge/python-3.11+-green)
 ![Discord.py](https://img.shields.io/badge/discord.py-2.0+-purple)
 
@@ -24,8 +24,11 @@
 - (๑•́ ω •̀๑) **Interactive Commands**: Multiple commands with `!` prefix
 - (´・ω・`) **User Profiles & XP System**: Earn XP, level up, and showcase your Discord profile with social media links
 - ✨ **Social Media Integration**: Link your Twitter, GitHub, Instagram, and website to your profile
-- (´・ω・`) **Weather API Integration**: Check real-time weather
+- (´・ω・`) **Weather API Integration**: Check real-time weather with `!tiempo` or `!clima`
 - (´▽｀) **Giphy API Integration**: Search and share GIFs
+-  **Daily Leaderboard**: Automatic Top 10 ranking at midnight (12 AM) with user levels and XP in #general
+- 🎯 **Fortune System**: Random wisdom quotes sent to #general every 6 hours
+- 🧹 **Moderation Tools**: Admin commands for channel management (bulk delete messages)
 - o(´▽｀)ノ **SQLite Database**: Persistent data storage with Docker volume support
 - (´・_・`) **Docker Ready**: Easy deployment with Docker Compose
 - (´▽｀) **Modular Architecture**: Organized and maintainable code
@@ -146,17 +149,23 @@ DISCORD_TOKEN=your_discord_token
 
 Miki responds to the following commands (prefix `!`):
 
-| Command | Description |
-|---------|-------------|
-| `!perfil [@usuario]` | View your profile or another user's profile with XP, levels, and social media links |
-| `!historial` | Shows the 10 most repeated words in the last 100 messages |
-| `!say <text>` | Repeats the message you send |
-| `!gravity` | Shows a basketball basket GIF |
-| `!presentarse` | The bot introduces itself |
-| `!talk` | The bot greets you with a random message |
-| `!clima <city>` | Shows the current weather of a city (Weather API) |
-| `!gif <search>` | Search and display a GIF (Giphy API) |
-| `!ayuda` | Shows available commands |
+| Command                       | Description                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------ |
+| `!perfil [@usuario]`          | View your profile or another user's profile with XP, levels, and social media. |
+| `!historial`                  | Shows the 10 most repeated words in the last 100 messages.                     |
+| `!say <text>`                 | Repeats the message you send.                                                  |
+| `!presentarse`                | The bot introduces itself.                                                     |
+| `!talk`                       | The bot greets you with a random message.                                      |
+| `!clima <city> [country]`     | Shows the current weather of a city (Weather API).                             |
+| `!tiempo <city>`              | Alternative command for weather.                                               |
+| `!gif <search>`               | Search and display a GIF (Giphy API).                                          |
+| `!clear <numero>`             | **Admin only** - Deletes the last N messages (max: 100).                       |
+| `!testdm`                     | Sends a test Direct Message to check if the bot can contact you.               |
+| `!ayuda`                      | Shows available commands.                                                      |
+
+## (´▽｀) Future Development: Slash Commands
+
+To align with Discord's modern standards, there is a plan to migrate all prefix-based commands (`!`) to **Slash Commands**. This will provide a more integrated and user-friendly experience with autocompletion and clear command structures directly within the Discord interface.
 
 ## (´▽｀) Project Structure
 
@@ -187,7 +196,7 @@ miki/
 
 For all versions, new features and bugfixes, see [CHANGELOG.md](CHANGELOG.md).
 
-**Current Version**: 1.3.0
+**Current Version**: 1.5.0
 
 ## (๑•́ ω •̀๑) Development
 
