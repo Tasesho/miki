@@ -1,13 +1,43 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import time
+import random
 from database.manager import DBManager
+from datetime import datetime
 
 class Events(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = DBManager()
         self.xp_cooldown = {}  # {user_id: timestamp}
+        self.last_leaderboard_day = None  # Para evitar duplicados del leaderboard
+        self.fortunes = [
+            "La vida es como un café, su valor no se establece por lo caliente que está, sino por cuánto tiempo permanece en tu taza. (´▽`)",
+            "No busques a alguien que resuelva tus problemas; busca a alguien que nunca te deje enfrentarlos solo. (ง'̀-'́)ง",
+            "El éxito no es final, el fracaso no es fatal: lo que cuenta es el coraje de continuar. (๑•́ ω •̀๑)",
+            "A veces lo pequeño es grande. La semilla más diminuta puede convertirse en el árbol más fuerte. (´▽｀)",
+            "Tu tiempo es limitado, no lo gastes viviendo la vida de otro. (´・ω・`)",
+            "Las personas que son lo suficientemente locas para creer que pueden cambiar el mundo, son las que lo hacen. (´▽`)ノ",
+            "No puedes controlar el viento, pero sí puedes ajustar las velas. (~_~)",
+            "Cada experto fue una vez un principiante. (´・_・`)",
+            "La vida es un 10% lo que te sucede y un 90% cómo reaccionas. (´▽`)",
+            "No es sobre tener tiempo, es sobre hacer tiempo. (๑•́ ω •̀๑)",
+            "El mejor momento para plantar un árbol fue hace 20 años. El segundo mejor momento es ahora. (´▽｀)",
+            "La felicidad no es el destino, es el viaje. (´▽`)ノ",
+            "Cuando sientas que el mundo es demasiado, respira profundo y recuerda: tú has superado todo hasta ahora. (๑•́ ω •̀๑)",
+            "La gratitud es el antídoto para la negatividad. m(_ _)m",
+            "Tu única limitación eres tú mismo. Vuela alto. (´▽`)",
+            "En medio de la dificultad reside la oportunidad. (´▽`)",
+            "No esperes el momento perfecto, toma el momento e hazlo perfecto. (´・ω・`)",
+            "La vida es demasiado corta para desperdiciarla en lo que no te importa. (´▽`)",
+            "Sé la energía que quieres atraer. (´▽`)ノ",
+            "Recuerda: eres más fuerte de lo que crees. (´▽`)",
+            "Las metas sin planos siguen siendo deseos. Actúa hoy. (´▽`)",
+            "El cambio comienza cuando decides que es hora de cambiar. (๑•́ ω •̀๑)",
+            "Eres el artista de tu propia vida. Pinta tu obra maestra. (´▽`)",
+            "No te rindas en el segundo acto. Las mejores historias tienen giros inesperados. (´・_・`)",
+            "Tu potencial es infinito. Cree en ti. (´▽`)",
+        ]
         self.triggers = {
             "hola": "ola   (●'◡'●)",
             "xao": "Hasta la Proxima   (˶˃ ᵕ ˂˶) .ᐟ.ᐟ ",
@@ -34,15 +64,113 @@ class Events(commands.Cog):
             "clima": "Usa !clima si quieres saber de verdad  ( ﾟヮﾟ)",
             
         }
+        # Iniciar tasks
+        self.daily_leaderboard.start()
+        self.fortune_loop.start()
 
     @commands.Cog.listener()
     async def on_ready(self):
         print(f" Miki está online: {self.bot.user}")
         await self.db.init_db()
 
+    @tasks.loop(hours=1)  # Verifica cada hora
+    async def daily_leaderboard(self):
+        """Envía el leaderboard diario a las 12 AM en el canal general"""
+        now = datetime.now()
+        today = now.date()
+        
+        # Verificar si es medianoche (00:00) y si aún no se ejecutó hoy
+        if now.hour == 0 and self.last_leaderboard_day != today:
+            self.last_leaderboard_day = today
+            try:
+                leaderboard = await self.db.get_leaderboard(limit=10)
+                
+                if leaderboard:
+                    # Construir el embed del leaderboard
+                    embed = discord.Embed(
+                        title="Leaderboard Diario (´▽`) - Top 10",
+                        description="Ranking de usuarios por nivel (๑•́ ω •̀๑)",
+                        color=discord.Color.gold(),
+                        timestamp=now
+                    )
+                
+                for idx, user in enumerate(leaderboard, 1):
+                    if idx == 1:
+                        medal = "🌟 1º"
+                    elif idx == 2:
+                        medal = "⭐ 2º"
+                    elif idx == 3:
+                        medal = "✨ 3º"
+                    else:
+                        medal = f"{idx}º"
+                    embed.add_field(
+                        name=f"{medal} {user['username']}",
+                        value=f"Nivel: **{user['nivel']}** | XP: **{user['xp']}**",
+                        inline=False
+                    )
+                
+                embed.set_footer(text="¡Sigue subiendo de nivel! (´▽`)")
+                
+                # Enviar solo al canal general de cada servidor
+                for guild in self.bot.guilds:
+                    canal_destino = None
+                    for channel in guild.text_channels:
+                        # Buscar canales que contengan "general" (ignora emojis o texto extra)
+                        if 'general' in channel.name.lower() and channel.permissions_for(guild.me).send_messages:
+                            canal_destino = channel
+                            break
+                    
+                    if canal_destino:
+                        try:
+                            await canal_destino.send(embed=embed)
+                        except Exception as e:
+                            print(f"[LEADERBOARD] Error al enviar en {guild.name}: {e}")
+            except Exception as e:
+                print(f"Error en daily_leaderboard: {e}")
+
+    @daily_leaderboard.before_loop
+    async def before_daily_leaderboard(self):
+        await self.bot.wait_until_ready()
+
+    @tasks.loop(hours=6)
+    async def fortune_loop(self):
+        print("\n[FORTUNA] Ejecutando loop de fortunas...", flush=True)
+        try:
+            if not self.bot.guilds:
+                print("[FORTUNA] El bot no está en ningún servidor o no los ha cargado aún.", flush=True)
+                return
+                
+            fortune = random.choice(self.fortunes)
+            
+            for guild in self.bot.guilds:
+                canal_destino = None
+                
+                # 1. Filtro estricto: solo buscar canales que coincidan con estos sinónimos
+                sinonimos = ['general', 'chat', 'lobby', 'principal']
+                
+                for channel in guild.text_channels:
+                    if any(s in channel.name.lower() for s in sinonimos) and channel.permissions_for(guild.me).send_messages:
+                        canal_destino = channel
+                        break
+                
+                if canal_destino:
+                    embed = discord.Embed(title="Fortuna del Día (´▽`)", description=fortune, color=discord.Color.purple())
+                    await canal_destino.send(embed=embed)
+                    print(f"[FORTUNA] ✅ Enviado a {guild.name} en #{canal_destino.name}", flush=True)
+                else:
+                    print(f"[FORTUNA] ❌ Ningún canal válido ({', '.join(sinonimos)}) en {guild.name}", flush=True)
+                    
+        except Exception as e:
+            print(f"[FORTUNA] ❌ Error Crítico: {e}", flush=True)
+
+    @fortune_loop.before_loop
+    async def before_fortune_loop(self):
+        await self.bot.wait_until_ready()
+
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author == self.bot.user or message.author.bot:
+        # Ignorar mensajes del bot o de otros bots
+        if message.author.id == self.bot.user.id or message.author.bot:
             return
 
         # Sistema de XP

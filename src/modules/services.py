@@ -208,6 +208,42 @@ class Services(commands.Cog):
             except:
                 pass
 
+    @commands.command(aliases=["top"])
+    async def leaderboard(self, ctx):
+        """Muestra el Top 10 de usuarios con más nivel y XP"""
+        try:
+            leaderboard = await self.db.get_leaderboard(limit=10)
+            
+            if not leaderboard:
+                await ctx.send("(´；ω；`) Aún no hay datos para el leaderboard.")
+                return
+                
+            embed = discord.Embed(
+                title="Leaderboard (´▽`) - Top 10",
+                description="Ranking actual de usuarios por nivel (๑•́ ω •̀๑)",
+                color=discord.Color.gold()
+            )
+            
+            for idx, user in enumerate(leaderboard, 1):
+                if idx == 1:
+                    medal = "🌟 1º"
+                elif idx == 2:
+                    medal = "⭐ 2º"
+                elif idx == 3:
+                    medal = "✨ 3º"
+                else:
+                    medal = f"{idx}º"
+                embed.add_field(
+                    name=f"{medal} {user['username']}",
+                    value=f"Nivel: **{user['nivel']}** | XP: **{user['xp']}**",
+                    inline=False
+                )
+            
+            embed.set_footer(text="¡Sigue subiendo de nivel! (´▽`)")
+            await ctx.send(embed=embed)
+        except Exception as e:
+            await ctx.send(f"(´；ω；`) Error al obtener el leaderboard: {e}")
+
 
 async def setup(bot):
     await bot.add_cog(Services(bot))
