@@ -6,11 +6,15 @@ import re
 import random
 from collections import Counter
 from database.manager import DBManager
+from services.guild_settings import GuildSettingsService
+from services.profile_service import ProfileService
 
 class Services(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = DBManager()
+        self.profile_service = ProfileService(self.db)
+        self.settings = GuildSettingsService(self.db)
     
 
     @commands.command()
@@ -87,132 +91,87 @@ class Services(commands.Cog):
             res += f"• {p}: {c}\n"
         await ctx.send(res)
 
-    @commands.command()
-    async def perfil(self, ctx, user: discord.User = None):
-        """Muestra el perfil del usuario con XP y redes sociales"""
+    @commands.group(name="profile", aliases=["perfil"], invoke_without_command=True)
+    async def profile(self, ctx, user: discord.Member = None):
+        """Muestra el perfil del usuario con XP y campos sociales por servidor."""
+        if ctx.guild is None:
+            await ctx.send("(´；ω；`) Usa este comando dentro de un servidor.")
+            return
+
         if user is None:
             user = ctx.author
-        
-        usuario = await self.db.get_usuario(user.id)
-        
+
+        usuario = await self.profile_service.get_profile(ctx.guild.id, user)
+
         if usuario is None:
             if user == ctx.author:
-                await ctx.send("(´・ω・`) Te he enviado un DM para configurar tu perfil.")
-                try:
-                    await self._setup_profile(ctx.author)
-                except discord.Forbidden:
-                    await ctx.send("(´；ω；`) No puedo enviar mensajes directos.")
+                await self.profile_service.ensure_profile(ctx.guild.id, user)
+                usuario = await self.profile_service.get_profile(ctx.guild.id, user)
             else:
-                await ctx.send(f"(´；ω；`) {user.mention} no tiene un perfil registrado.")
-            return
-        
-        # Mostrar perfil
-        xp_actual = usuario['xp']
-        nivel = usuario['nivel']
-        xp_para_proximo = nivel * 100
-        
-        # Barra de progreso visual
-        barra_completa = 10
-        barra_llena = int((xp_actual / xp_para_proximo) * barra_completa)
-        barra_vacia = barra_completa - barra_llena
-        barra = "[" + "■" * barra_llena + "□" * barra_vacia + "]"
-        
-        embed = discord.Embed(
-            title=f"[Perfil] {usuario['username']}",
-            color=discord.Color.from_rgb(100, 150, 255)
-        )
-        embed.set_thumbnail(url=user.display_avatar.url)
-        embed.add_field(name="[*] Nivel", value=str(nivel), inline=True)
-        embed.add_field(name="[+] XP", value=f"{xp_actual}/{xp_para_proximo}", inline=True)
-        embed.add_field(name="Progreso", value=barra, inline=False)
-        embed.add_field(name="[=] Registro", value=usuario['fecha_registro'], inline=False)
-        
-        # Redes sociales
-        redes_text = ""
-        if usuario['twitter']:
-            redes_text += f"[Twitter]({usuario['twitter']})\n"
-        if usuario['github']:
-            redes_text += f"[GitHub]({usuario['github']})\n"
-        if usuario['instagram']:
-            redes_text += f"[Instagram]({usuario['instagram']})\n"
-        if usuario['website']:
-            redes_text += f"[Website]({usuario['website']})\n"
-        
-        if redes_text:
-            embed.add_field(name="[~] Redes Sociales", value=redes_text.strip(), inline=False)
-        
-        await ctx.send(embed=embed)
+                await ctx.send(
+                    f"(´・ω・`) Aún no veo un perfil de {user.mention} en este servidor.\n"
+                    "Cuando esa persona escriba o use `!profile`, lo podré mostrar."
+                )
+                return
 
-    async def _setup_profile(self, user):
-        """Asistente de configuración por DM"""
-        try:
-            dm_channel = await user.create_dm()
-            
-            # Mensaje introductorio
-            await dm_channel.send(
-                "(´・ω・`) Hola! Vamos a configurar tu perfil. Responde cada pregunta o escribe 'skip' para omitir.\n"
-                "Tienes **5 minutos** para responder cada pregunta.\n_ _"
+        await ctx.send(embed=await self._build_profile_embed(user, usuario))
+
+    @profile.command(name="edit")
+    async def profile_edit(self, ctx):
+        """Lista los campos editables del perfil."""
+        if ctx.guild is None:
+            await ctx.send("(´；ω；`) Usa este comando dentro de un servidor.")
+            return
+
+        fields = await self.profile_service.available_fields()
+        field_names = ", ".join(field["key"] for field in fields)
+        await ctx.send(
+            "(´▽`) Puedes editar tu perfil por partes, sin rehacerlo completo.\n"
+            f"Campos disponibles: **{field_names}**\n"
+            "Ejemplos:\n"
+            "`!profile set github octocat`\n"
+            "`!profile set steam mi_usuario`\n"
+            "`!profile set website https://mi-sitio.cl`"
+        )
+
+    @profile.command(name="set")
+    async def profile_set(self, ctx, field_key: str = None, *, value: str = None):
+        """Actualiza un campo individual del perfil."""
+        if ctx.guild is None:
+            await ctx.send("(´；ω；`) Usa este comando dentro de un servidor.")
+            return
+        if not field_key or not value:
+            await ctx.send(
+                "(´・ω・`) Me faltó saber qué quieres guardar.\n"
+                "Usa: `!profile set <campo> <valor>`\n"
+                "Ejemplos: `!profile set github octocat` o `!profile set steam mi_usuario`"
             )
-            
-            preguntas = [
-                ("Twitter", "twitter"),
-                ("GitHub", "github"),
-                ("Instagram", "instagram"),
-                ("Website", "website")
-            ]
-            
-            respuestas = {}
-            
-            for nombre, campo in preguntas:
-                await dm_channel.send(f"[?] {nombre} (link o 'skip'):")
-                try:
-                    msg = await self.bot.wait_for(
-                        'message',
-                        check=lambda m: m.author == user and isinstance(m.channel, discord.DMChannel),
-                        timeout=300
-                    )
-                    contenido = msg.content.strip()
-                    if contenido.lower() != 'skip':
-                        respuestas[campo] = contenido
-                        await dm_channel.send(f"[✓] {nombre} guardado!")
-                    else:
-                        respuestas[campo] = None
-                        await dm_channel.send(f"[~] {nombre} omitido.")
-                except TimeoutError:
-                    await dm_channel.send("(´；ω；`) Se acabó el tiempo (5 min). Intenta de nuevo con !perfil")
-                    return
-            
-            # Registrar usuario primero si no existe
-            usuario_existente = await self.db.get_usuario(user.id)
-            if usuario_existente is None:
-                await self.db.registrar_usuario(user.id, user.name)
-            
-            # Guardar redes sociales
-            await self.db.actualizar_redes(
-                user.id,
-                twitter=respuestas.get('twitter'),
-                github=respuestas.get('github'),
-                instagram=respuestas.get('instagram'),
-                website=respuestas.get('website')
+            return
+
+        field = await self.profile_service.set_field(ctx.guild.id, ctx.author, field_key, value)
+        if field is None:
+            fields = await self.profile_service.available_fields()
+            field_names = ", ".join(item["key"] for item in fields)
+            await ctx.send(
+                "(´；ω；`) No conozco ese campo para el perfil.\n"
+                f"Puedes usar: **{field_names}**\n"
+                "Mira la lista con `!profile edit`."
             )
-            
-            await dm_channel.send("(´▽`) [*] ¡Perfil configurado correctamente!")
-            
-        except discord.Forbidden:
-            # Este error se maneja en el comando perfil directamente
-            raise
-        except Exception as e:
-            print(f"Error en _setup_profile: {e}")
-            try:
-                await dm_channel.send(f"(´；ω；`) Ocurrió un error: {str(e)}")
-            except:
-                pass
+            return
+
+        await ctx.send(
+            f"(´▽`) Listo, guardé **{field['display_name']}** en tu perfil de este servidor.\n"
+            "Puedes revisarlo con `!profile`."
+        )
 
     @commands.command(aliases=["top"])
     async def leaderboard(self, ctx):
         """Muestra el Top 10 de usuarios con más nivel y XP"""
+        if ctx.guild is None:
+            await ctx.send("(´；ω；`) Usa este comando dentro de un servidor.")
+            return
         try:
-            leaderboard = await self.db.get_leaderboard(limit=10)
+            leaderboard = await self.db.get_leaderboard(ctx.guild.id, limit=10)
             
             if not leaderboard:
                 await ctx.send("(´；ω；`) Aún no hay datos para el leaderboard.")
@@ -243,6 +202,105 @@ class Services(commands.Cog):
             await ctx.send(embed=embed)
         except Exception as e:
             await ctx.send(f"(´；ω；`) Error al obtener el leaderboard: {e}")
+
+    @commands.group(name="config", invoke_without_command=True)
+    @commands.has_guild_permissions(manage_guild=True)
+    async def config(self, ctx):
+        """Muestra las claves de configuración disponibles."""
+        if ctx.guild is None:
+            await ctx.send("(´；ω；`) Usa este comando dentro de un servidor.")
+            return
+        keys = ", ".join(self.settings.available_keys())
+        await ctx.send(
+            "(ง'̀-'́)ง Configuración de este servidor.\n"
+            f"Opciones disponibles: **{keys}**\n"
+            "Ejemplos:\n"
+            "`!config set leaderboard_channel_id #ranking`\n"
+            "`!config set xp_per_message 15`\n"
+            "`!config set xp_cooldown_seconds 60`"
+        )
+
+    @config.command(name="set")
+    @commands.has_guild_permissions(manage_guild=True)
+    async def config_set(self, ctx, key: str = None, *, value: str = None):
+        if ctx.guild is None:
+            await ctx.send("(´；ω；`) Usa este comando dentro de un servidor.")
+            return
+        if not key or value is None:
+            await ctx.send(
+                "(´・ω・`) Me faltó una clave o un valor para guardar.\n"
+                "Usa: `!config set <clave> <valor>`\n"
+                "Ejemplo: `!config set leaderboard_channel_id #ranking`"
+            )
+            return
+
+        normalized_value = self._normalize_setting_value(ctx, key, value)
+        was_set = await self.settings.set(ctx.guild.id, key, normalized_value)
+        if not was_set:
+            keys = ", ".join(self.settings.available_keys())
+            await ctx.send(
+                "(´；ω；`) Esa configuración no existe todavía.\n"
+                f"Puedes cambiar: **{keys}**\n"
+                "Mira ejemplos con `!config`."
+            )
+            return
+
+        await ctx.send(
+            f"(´▽`) Guardé `{key}` para este servidor.\n"
+            "Los cambios se aplican solo aquí, no en otros servidores."
+        )
+
+    async def _build_profile_embed(self, user, usuario):
+        xp_actual = usuario["xp"]
+        nivel = usuario["nivel"]
+        xp_para_proximo = nivel * 100
+        barra_completa = 10
+        barra_llena = int((xp_actual / xp_para_proximo) * barra_completa)
+        barra_vacia = barra_completa - barra_llena
+        barra = "[" + "■" * barra_llena + "□" * barra_vacia + "]"
+
+        embed = discord.Embed(
+            title=f"[Perfil] {usuario['username']}",
+            color=discord.Color.from_rgb(100, 150, 255)
+        )
+        embed.set_thumbnail(url=user.display_avatar.url)
+        embed.add_field(name="[*] Nivel", value=str(nivel), inline=True)
+        embed.add_field(name="[+] XP", value=f"{xp_actual}/{xp_para_proximo}", inline=True)
+        embed.add_field(name="Progreso", value=barra, inline=False)
+        embed.add_field(name="[=] Registro", value=usuario["fecha_registro"], inline=False)
+
+        fields = await self.profile_service.available_fields()
+        values = usuario.get("profile_fields", {})
+        redes = []
+        for field in fields:
+            value = values.get(field["key"])
+            if value:
+                url = self.profile_service.format_profile_url(field, value)
+                redes.append(f"[{field['display_name']}]({url})")
+
+        if redes:
+            embed.add_field(name="[~] Redes Sociales", value="\n".join(redes), inline=False)
+
+        return embed
+
+    def _normalize_setting_value(self, ctx, key, value):
+        channel_settings = {
+            "leaderboard_channel_id",
+            "logs_channel_id",
+            "welcome_channel_id",
+        }
+        if key in channel_settings and ctx.message.channel_mentions:
+            return ctx.message.channel_mentions[0].id
+        return value.strip()
+
+    async def cog_command_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send(
+                "(´；ω；`) Esta parte es para admins del servidor.\n"
+                "Necesitas el permiso **Manage Guild** para cambiar la configuración."
+            )
+            return
+        raise error
 
 
 async def setup(bot):

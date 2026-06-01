@@ -63,7 +63,7 @@ class Basic(commands.Cog):
         
         embed.add_field(
             name="[PROFILE] (๑•́ ω •̀๑) Tu Perfil",
-            value="**!perfil [@usuario]**\nVe tu perfil o el de otro usuario con XP y redes sociales\nPrimera vez: Configura tus redes por DM automáticamente\n_ _",
+            value="**!profile** / **!perfil** - Mira tu perfil\n**!profile @usuario** - Mira el perfil de alguien\n**!profile edit** - Ve qué puedes editar\n**!profile set github octocat** - Guarda una red\nTu perfil es distinto en cada servidor\n_ _",
             inline=False
         )
         
@@ -81,7 +81,13 @@ class Basic(commands.Cog):
         
         embed.add_field(
             name="[XP] (๑•́ ω •̀๑) Sistema de Experiencia",
-            value="Ganas **10 XP por mensaje** (cooldown: 60 segundos)",
+            value="Ganas XP al conversar. Cada servidor tiene su propio progreso y ranking.",
+            inline=False
+        )
+
+        embed.add_field(
+            name="[CONFIG] Administración",
+            value="**!config** - Ver opciones\n**!config set leaderboard_channel_id #ranking**\n**!config set xp_per_message 15**\nRequiere permiso Manage Guild",
             inline=False
         )
         
