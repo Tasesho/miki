@@ -5,7 +5,7 @@ import requests
 class Weather(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.api_key = "TU_API_KEY_AQUI"  # Lo ideal es sacarlo de config.py
+        self.api_key = "TU_API_KEY_AQUI"  
         self.base_url = "http://api.openweathermap.org/data/2.5/weather?"
 
     def get_weather_data(self, city_name):

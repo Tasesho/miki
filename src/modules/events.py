@@ -10,7 +10,6 @@ class Events(commands.Cog):
         self.bot = bot
         self.db = DBManager()
         self.xp_cooldown = {}  # {user_id: timestamp}
-        self.last_leaderboard_day = None  # Para evitar duplicados del leaderboard
         self.fortunes = [
             "La vida es como un café, su valor no se establece por lo caliente que está, sino por cuánto tiempo permanece en tu taza. (´▽`)",
             "No busques a alguien que resuelva tus problemas; busca a alguien que nunca te deje enfrentarlos solo. (ง'̀-'́)ง",
@@ -73,66 +72,68 @@ class Events(commands.Cog):
         print(f" Miki está online: {self.bot.user}")
         await self.db.init_db()
 
-    @tasks.loop(hours=1)  # Verifica cada hora
+    @tasks.loop(hours=24)
     async def daily_leaderboard(self):
-        """Envía el leaderboard diario a las 12 AM en el canal general"""
-        now = datetime.now()
-        today = now.date()
-        
-        # Verificar si es medianoche (00:00) y si aún no se ejecutó hoy
-        if now.hour == 0 and self.last_leaderboard_day != today:
-            self.last_leaderboard_day = today
-            try:
-                leaderboard = await self.db.get_leaderboard(limit=10)
+        print("\n[LEADERBOARD] Ejecutando loop de leaderboard diario...", flush=True)
+        try:
+            if not self.bot.guilds:
+                print("[LEADERBOARD] El bot no está en ningún servidor o no los ha cargado aún.", flush=True)
+                return
+
+            leaderboard = await self.db.get_leaderboard(limit=10)
+            
+            if not leaderboard:
+                print("[LEADERBOARD] No hay suficientes datos para el leaderboard.", flush=True)
+                return
                 
-                if leaderboard:
-                    # Construir el embed del leaderboard
-                    embed = discord.Embed(
-                        title="Leaderboard Diario (´▽`) - Top 10",
-                        description="Ranking de usuarios por nivel (๑•́ ω •̀๑)",
-                        color=discord.Color.gold(),
-                        timestamp=now
-                    )
+            # Construir el embed del leaderboard
+            embed = discord.Embed(
+                title="Leaderboard Diario (´▽`) - Top 10",
+                description="Ranking de usuarios por nivel (๑•́ ω •̀๑)",
+                color=discord.Color.gold(),
+                timestamp=datetime.now()
+            )
+            
+            for idx, user in enumerate(leaderboard, 1):
+                if idx == 1:
+                    medal = "🌟 1º"
+                elif idx == 2:
+                    medal = "⭐ 2º"
+                elif idx == 3:
+                    medal = "✨ 3º"
+                else:
+                    medal = f"{idx}º"
+                embed.add_field(
+                    name=f"{medal} {user['username']}",
+                    value=f"Nivel: **{user['nivel']}** | XP: **{user['xp']}**",
+                    inline=False
+                )
+            
+            embed.set_footer(text="¡Sigue subiendo de nivel! (´▽`)")
+            
+            for guild in self.bot.guilds:
+                canal_destino = None
+                sinonimos = ['general', 'chat', 'lobby', 'principal']
                 
-                for idx, user in enumerate(leaderboard, 1):
-                    if idx == 1:
-                        medal = "🌟 1º"
-                    elif idx == 2:
-                        medal = "⭐ 2º"
-                    elif idx == 3:
-                        medal = "✨ 3º"
-                    else:
-                        medal = f"{idx}º"
-                    embed.add_field(
-                        name=f"{medal} {user['username']}",
-                        value=f"Nivel: **{user['nivel']}** | XP: **{user['xp']}**",
-                        inline=False
-                    )
+                for channel in guild.text_channels:
+                    if any(s in channel.name.lower() for s in sinonimos) and channel.permissions_for(guild.me).send_messages:
+                        canal_destino = channel
+                        break
                 
-                embed.set_footer(text="¡Sigue subiendo de nivel! (´▽`)")
-                
-                # Enviar solo al canal general de cada servidor
-                for guild in self.bot.guilds:
-                    canal_destino = None
-                    for channel in guild.text_channels:
-                        # Buscar canales que contengan "general" (ignora emojis o texto extra)
-                        if 'general' in channel.name.lower() and channel.permissions_for(guild.me).send_messages:
-                            canal_destino = channel
-                            break
+                if canal_destino:
+                    await canal_destino.send(embed=embed)
+                    print(f"[LEADERBOARD] ✅ Enviado a {guild.name} en #{canal_destino.name}", flush=True)
+                else:
+                    print(f"[LEADERBOARD] ❌ Ningún canal válido ({', '.join(sinonimos)}) en {guild.name}", flush=True)
                     
-                    if canal_destino:
-                        try:
-                            await canal_destino.send(embed=embed)
-                        except Exception as e:
-                            print(f"[LEADERBOARD] Error al enviar en {guild.name}: {e}")
-            except Exception as e:
-                print(f"Error en daily_leaderboard: {e}")
+        except Exception as e:
+            print(f"[LEADERBOARD] ❌ Error Crítico: {e}", flush=True)
 
     @daily_leaderboard.before_loop
     async def before_daily_leaderboard(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(hours=6)
+    @tasks.loop(hours=12)
     async def fortune_loop(self):
         print("\n[FORTUNA] Ejecutando loop de fortunas...", flush=True)
         try:

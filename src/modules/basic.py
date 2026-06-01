@@ -75,13 +75,13 @@ class Basic(commands.Cog):
         
         embed.add_field(
             name="[FORTUNA] (´▽`) Fortuna del Día",
-            value="El bot envía frases de sabiduría cada 6 horas en general\nSon mensajes automáticos para motivarte (´▽`)\n_ _",
+            value="El bot envía frases de sabiduría cada 12 horas en general\nSon mensajes automáticos para motivarte (´▽`)\n_ _",
             inline=False
         )
         
         embed.add_field(
             name="[XP] (๑•́ ω •̀๑) Sistema de Experiencia",
-            value="Ganas **10 XP por mensaje** (cooldown: 60 segundos)\nFormula: Nivel actual × 100 = XP para siguiente nivel\nRecibe notificación automática al subir de nivel\n_ _",
+            value="Ganas **10 XP por mensaje** (cooldown: 60 segundos)",
             inline=False
         )
         
