@@ -2,6 +2,26 @@
 
 This document records all versions of **BOT_MIKI** and its changes.
 
+## [2.0.0] - 2026-05-31
+- **Major Release**: Miki now treats each Discord server as its own little world (´▽`)ノ
+- **Architecture**: Refactored the data model around `guild_id` so profiles, XP, levels, leaderboard, settings, and future social systems can live independently per server.
+- **Database**: Added the new guild-scoped tables `users`, `guild_members`, `guild_profiles`, `profile_fields`, `guild_settings`, and `guild_triggers`.
+- **Database**: Added composite keys for server-specific data, including `(guild_id, user_id)`, `(guild_id, user_id, field_key)`, and `(guild_id, setting_key)`.
+- **Database**: Added indexes for leaderboard lookups, profile fields, and guild triggers so Miki does not trip over herself when the server grows (ง'̀-'́)ง
+- **Migration Note**: This release is intended to start with a clean database in production. Old global profile/XP data is not automatically migrated because it did not have `guild_id`.
+- **New Command**: `!profile` / `!perfil` now focuses on showing a user's profile inside the current server.
+- **New Command**: `!profile edit` shows editable profile fields with friendly examples.
+- **New Command**: `!profile set <field> <value>` lets users update one profile field at a time, such as GitHub, Steam, Instagram, Twitter, or Website.
+- **Profile System**: Social links are no longer hardcoded as fixed user columns. They now use extensible profile fields, making future networks easier to add.
+- **XP System**: XP cooldown and XP per message are now read per server instead of being hardcoded globally.
+- **Leaderboard**: `!leaderboard` / `!top` now ranks users only inside the current server.
+- **Configuration**: Added `!config` and `!config set <key> <value>` for server admins with `Manage Guild` permission.
+- **Configuration**: Added server settings for leaderboard channel, logs channel, welcome channel, XP per message, and XP cooldown.
+- **Permissions**: Admin configuration now depends on Discord permissions, not role names. Much cleaner, much less cursed (´・ω・`)
+- **UX**: Improved feedback messages for profile and configuration commands so users get examples instead of cryptic technical hints.
+- **Fix**: `weather.py` now has a valid extension `setup()` function so the automatic module loader does not complain during startup.
+- **Docs**: Updated `!ayuda` to explain the new profile, XP, and configuration behavior.
+
 ## [1.6.0] - 2026-04-29
 - **Refactor**: `fortune_loop` now uses a synonym list (`general`, `chat`, `lobby`) for smarter channel detection.
 - **Fix**: The bot no longer sends fortune messages to incorrect channels if a "general" channel is not found.
