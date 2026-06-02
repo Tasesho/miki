@@ -60,7 +60,7 @@ class Services(commands.Cog):
     @commands.command()
     async def gif(self, ctx, *, query: str):
         api_key = os.getenv("GIPHY_API_KEY")
-        url = f"https://api.giphy.com/v1/gifs/search?api_key={api_key}&q={query}&limit=50&lang=es"
+        url = f"https://api.giphy.com/v1/gifs/search?api_key={api_key}&q={query}&limit=10&lang=es"
         
         response = requests.get(url)
         if response.status_code == 200:
