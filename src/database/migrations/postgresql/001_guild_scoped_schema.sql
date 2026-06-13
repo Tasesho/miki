@@ -46,6 +46,22 @@ CREATE TABLE IF NOT EXISTS guild_settings (
     PRIMARY KEY (guild_id, setting_key)
 );
 
+CREATE TABLE IF NOT EXISTS guild_modules (
+    guild_id BIGINT NOT NULL,
+    module_key TEXT NOT NULL,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (guild_id, module_key)
+);
+
+CREATE TABLE IF NOT EXISTS guild_setup_state (
+    guild_id BIGINT NOT NULL,
+    flow_key TEXT NOT NULL,
+    state_json JSONB NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (guild_id, flow_key)
+);
+
 CREATE TABLE IF NOT EXISTS guild_triggers (
     guild_id BIGINT NOT NULL,
     trigger_key TEXT NOT NULL,

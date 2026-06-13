@@ -1,6 +1,8 @@
-import discord
-from discord.ext import commands
 import random
+
+import discord
+from discord import app_commands
+from discord.ext import commands
 
 
 class Basic(commands.Cog):
@@ -13,98 +15,104 @@ class Basic(commands.Cog):
             "¡Hey! Me alegra verte por aquí.",
         ]
 
-    @commands.command()
-    async def talk(self, ctx):
-        await ctx.send(random.choice(self.saludos))
+    @app_commands.command(name="talk", description="Miki te saluda aleatoriamente")
+    async def talk(self, interaction: discord.Interaction):
+        await interaction.response.send_message(random.choice(self.saludos))
 
-    @commands.command()
-    async def presentarse(self, ctx):
+    @app_commands.command(name="presentarse", description="Miki se presenta de manera oficial")
+    async def presentarse(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="¡Hola a todos! (˶˃ ᵕ ˂˶) .ᐟ.ᐟ ",
-            description=f"Soy **Miki**, un bot creado por {ctx.author.mention}. Estoy aquí para darle más vida al chat.",
-            color=discord.Color.pink()
+            description=f"Soy **Miki**, un bot creado por {interaction.user.mention}. Estoy aquí para darle más vida al chat.",
+            color=discord.Color.pink(),
         )
-        embed.set_footer(text="¡Usa !ayuda para ver mis comandos!")
-        await ctx.send(embed=embed)
-    
-    @commands.command()
-    async def say(self, ctx, *, mensaje: str):
-        await ctx.send(mensaje)
+        embed.set_footer(text="¡Usa /ayuda para ver mis comandos!")
+        await interaction.response.send_message(embed=embed)
 
-    @commands.command()
-    async def testdm(self, ctx):
-        """Prueba si el bot puede enviar DMs"""
+    @app_commands.command(name="say", description="Miki repite lo que dices")
+    async def say(self, interaction: discord.Interaction, mensaje: str):
+        await interaction.response.send_message(mensaje)
+
+    @app_commands.command(name="testdm", description="Prueba si el bot puede enviar DMs")
+    async def testdm(self, interaction: discord.Interaction):
         try:
-            dm = await ctx.author.create_dm()
-            await dm.send("(´▽`) ¡Hola! Este es un mensaje de prueba del bot Miki. ¿Recibes este DM?")
-            await ctx.send("(´▽`) He enviado un mensaje de prueba a tu DM!")
+            dm = await interaction.user.create_dm()
+            await dm.send(
+                "(´▽`) ¡Hola! Este es un mensaje de prueba del bot Miki. ¿Recibes este DM?"
+            )
+            await interaction.response.send_message(
+                "(´▽`) He enviado un mensaje de prueba a tu DM!"
+            )
         except discord.Forbidden:
-            await ctx.send("(´；ω；`) El bot NO puede enviar DMs. Verifica tu privacidad en Discord.")
+            await interaction.response.send_message(
+                "(´；ω；`) El bot NO puede enviar DMs. Verifica tu privacidad en Discord."
+            )
 
-    @commands.command()
-    async def ayuda(self, ctx):
+    @app_commands.command(name="ayuda", description="Muestra la lista de comandos disponibles")
+    async def ayuda(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="[INFO] (´▽`) Comandos Disponibles",
             description="Aquí están todas las funcionalidades de Miki (´・ω・`)",
-            color=discord.Color.from_rgb(100, 150, 255)
+            color=discord.Color.from_rgb(100, 150, 255),
         )
-        
+
         embed.add_field(
             name="[GIF] (´▽`)ノ Búsqueda de GIFs",
-            value="**!gif <búsqueda>**\nBusca un GIF aleatorio (Ex: !gif anime)\n_ _",
-            inline=False
+            value="**/gif <búsqueda>**\nBusca un GIF aleatorio (Ex: /gif anime)\n_ _",
+            inline=False,
         )
-        
+
         embed.add_field(
             name="[CLIMA] (´・_・`) Estado del Clima",
-            value="**!clima <ciudad> [país]** / **!tiempo <ciudad>**\nObtén el clima actual (Default: Chile)\nEj: !tiempo Barcelona o !clima Santiago Chile\n_ _",
-            inline=False
+            value="**/clima <ciudad> [país]** o **/tiempo <ciudad>**\nObtén el clima actual\n_ _",
+            inline=False,
         )
-        
+
         embed.add_field(
             name="[PROFILE] (๑•́ ω •̀๑) Tu Perfil",
-            value="**!profile** / **!perfil** - Mira tu perfil\n**!profile @usuario** - Mira el perfil de alguien\n**!profile edit** - Ve qué puedes editar\n**!profile set github octocat** - Guarda una red\nTu perfil es distinto en cada servidor\n_ _",
-            inline=False
+            value="**/profile view** - Mira tu perfil o el de alguien\n**/profile edit** - Ve qué puedes editar\n**/profile set** - Guarda una red\n_ _",
+            inline=False,
         )
-        
+
         embed.add_field(
             name="[MODS] (ง'̀-'́)ง Herramientas de Moderación",
-            value="**!clear <numero>** (´▽`) Solo admins\nBorra los últimos N mensajes (máx: 100)\nPrueba: !clear 5\n_ _",
-            inline=False
+            value="**/clear <numero>** (´▽`) Solo admins\nBorra los últimos N mensajes (máx: 100)\n_ _",
+            inline=False,
         )
-        
+
         embed.add_field(
             name="[FORTUNA] (´▽`) Fortuna del Día",
             value="El bot envía frases de sabiduría cada 12 horas en general\nSon mensajes automáticos para motivarte (´▽`)\n_ _",
-            inline=False
+            inline=False,
         )
-        
+
         embed.add_field(
             name="[XP] (๑•́ ω •̀๑) Sistema de Experiencia",
             value="Ganas XP al conversar. Cada servidor tiene su propio progreso y ranking.",
-            inline=False
+            inline=False,
         )
 
         embed.add_field(
             name="[CONFIG] Administración",
-            value="**!config** - Ver opciones\n**!config set leaderboard_channel_id #ranking**\n**!config set xp_per_message 15**\nRequiere permiso Manage Guild",
-            inline=False
+            value="**/config view** - Ver opciones\n**/config set** - Cambiar un ajuste\nRequiere permiso Administrar Servidor",
+            inline=False,
         )
-        
+
         embed.add_field(
             name="[STATS] (´・_・`) Historial de Palabras",
-            value="**!historial**\nMuestra las 10 palabras más repetidas (últimos 100 msgs)\n_ _",
-            inline=False
+            value="**/historial**\nMuestra las 10 palabras más repetidas (últimos 100 msgs)\n_ _",
+            inline=False,
         )
-        
+
         embed.add_field(
             name="[TOOLS] (´▽`)ノ Herramientas Generales",
-            value="**!say <mensaje>** - Repite tu mensaje\n**!presentarse** - Presentación de Miki\n**!talk** - Saludo aleatorio\n**!testdm** - Prueba de mensaje directo\n**!ayuda** - Esta lista\n_ _",
-            inline=False
+            value="**/say**, **/presentarse**, **/talk**, **/testdm**, **/ayuda**\n_ _",
+            inline=False,
         )
-        
+
         embed.set_footer(text="¡Diviértete usando Miki! (´▽`)")
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(Basic(bot))

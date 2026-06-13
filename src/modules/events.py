@@ -1,44 +1,20 @@
+from __future__ import annotations
+
+import logging
+import random
+from datetime import datetime
+
 import discord
 from discord.ext import commands, tasks
-import time
-import random
-from database.manager import DBManager
-from datetime import datetime
-from services.guild_settings import GuildSettingsService
 
-
-DEFAULT_TRIGGERS = {
-    "hola": "ola   (●'◡'●)",
-    "xao": "Hasta la Proxima   (˶˃ ᵕ ˂˶) .ᐟ.ᐟ ",
-    "miki": "que paso?  ( °ヮ° ) ? ",
-    "persona": "Persona referencia?? ",
-    "vc": "Unete al vc ╰┈➤[VC]➤",
-    "lit": "literalmente bruh...",
-    "xd": "lmao  (¬‿¬ )",
-    "F": "F en el chat  (╯﹏╰）",
-    "sad": "Todo va a estar bien...  (っ´ω`)ﾉ(╥ω╥)",
-    "miedo": "Tranqui, yo te protejo  (ง'̀-'́)ง",
-    "odio": "No digas eso, el odio es malo  (；￣Д￣)",
-    "te amo": "Yo... yo tambien?  (*/ω＼*)",
-    "ayuda": "Si necesitas algo, usa !ayuda  ( °∀°)o",
-    "pancito": "Invita un poco!  (っ˘ڡ˘ς)",
-    "cafe": "Un cafecito para seguir programando  ( ￣▽￣)旦",
-    "uwu": "nwn  (✿◡‿◡)",
-    "pog": "POGGERS  ( °o°) !!",
-    "afk": "No te tardes mucho...  (◕‿◕)",
-    "lag": "Es el internet o es el server?  (╯°□°)╯︵ ┻━┻",
-    "gg": "GG WP!  (っಠ‿ಠ)っ",
-    "basado": "Factores.  (⌐■_■)",
-    "miau": "Nyaa~  (＾◡＾)",
-    "clima": "Usa !clima si quieres saber de verdad  ( ﾟヮﾟ)",
-}
 
 class Events(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db = DBManager()
-        self.settings = GuildSettingsService(self.db)
-        self.xp_cooldown = {}  # {(guild_id, user_id): timestamp}
+        self.activity = bot.app.services.activity
+        self.guild_settings = bot.app.services.guild_settings
+        self.leaderboard_service = bot.app.services.leaderboard
+        self.triggers = bot.app.services.triggers
         self.fortunes = [
             "La vida es como un café, su valor no se establece por lo caliente que está, sino por cuánto tiempo permanece en tu taza. (´▽`)",
             "No busques a alguien que resuelva tus problemas; busca a alguien que nunca te deje enfrentarlos solo. (ง'̀-'́)ง",
@@ -66,40 +42,30 @@ class Events(commands.Cog):
             "No te rindas en el segundo acto. Las mejores historias tienen giros inesperados. (´・_・`)",
             "Tu potencial es infinito. Cree en ti. (´▽`)",
         ]
-        # Iniciar tasks
         self.daily_leaderboard.start()
         self.fortune_loop.start()
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        print(f" Miki está online: {self.bot.user}")
-        await self.db.init_db()
+    def cog_unload(self) -> None:
+        self.daily_leaderboard.cancel()
+        self.fortune_loop.cancel()
 
     @tasks.loop(hours=24)
     async def daily_leaderboard(self):
-        print("\n[LEADERBOARD] Ejecutando loop de leaderboard diario...", flush=True)
-        try:
-            if not self.bot.guilds:
-                print("[LEADERBOARD] El bot no está en ningún servidor o no los ha cargado aún.", flush=True)
-                return
+        logging.info("Running daily leaderboard loop")
+        for guild in self.bot.guilds:
+            channel_id = await self.guild_settings.get_int(guild.id, "leaderboard_channel_id")
+            if channel_id is None:
+                logging.info("No leaderboard channel configured in %s", guild.name)
+                continue
 
-            for guild in self.bot.guilds:
-                channel_id = await self.settings.get_int(guild.id, "leaderboard_channel_id")
-                if channel_id is None:
-                    print(f"[LEADERBOARD] Sin canal configurado en {guild.name}", flush=True)
-                    continue
+            channel = guild.get_channel(channel_id)
+            leaderboard = await self.leaderboard_service.top_members(guild.id, limit=10)
 
-                channel = guild.get_channel(channel_id)
-                leaderboard = await self.db.get_leaderboard(guild.id, limit=10)
-
-                if channel and leaderboard and channel.permissions_for(guild.me).send_messages:
-                    await channel.send(embed=self._build_leaderboard_embed(leaderboard, daily=True))
-                    print(f"[LEADERBOARD] Enviado a {guild.name} en #{channel.name}", flush=True)
-                else:
-                    print(f"[LEADERBOARD] Canal inválido o sin datos en {guild.name}", flush=True)
-                    
-        except Exception as e:
-            print(f"[LEADERBOARD] ❌ Error Crítico: {e}", flush=True)
+            if channel and leaderboard and channel.permissions_for(guild.me).send_messages:
+                await channel.send(embed=self._build_leaderboard_embed(leaderboard, daily=True))
+                logging.info("Sent leaderboard to %s in #%s", guild.name, channel.name)
+            else:
+                logging.info("Invalid leaderboard channel or no data in %s", guild.name)
 
     @daily_leaderboard.before_loop
     async def before_daily_leaderboard(self):
@@ -107,34 +73,33 @@ class Events(commands.Cog):
 
     @tasks.loop(hours=12)
     async def fortune_loop(self):
-        print("\n[FORTUNA] Ejecutando loop de fortunas...", flush=True)
-        try:
-            if not self.bot.guilds:
-                print("[FORTUNA] El bot no está en ningún servidor o no los ha cargado aún.", flush=True)
-                return
-                
-            fortune = random.choice(self.fortunes)
-            
-            for guild in self.bot.guilds:
-                canal_destino = None
-                
-                # 1. Filtro estricto: solo buscar canales que coincidan con estos sinónimos
-                sinonimos = ['general', 'chat', 'lobby', 'principal']
-                
-                for channel in guild.text_channels:
-                    if any(s in channel.name.lower() for s in sinonimos) and channel.permissions_for(guild.me).send_messages:
-                        canal_destino = channel
-                        break
-                
-                if canal_destino:
-                    embed = discord.Embed(title="Fortuna del Día (´▽`)", description=fortune, color=discord.Color.purple())
-                    await canal_destino.send(embed=embed)
-                    print(f"[FORTUNA] ✅ Enviado a {guild.name} en #{canal_destino.name}", flush=True)
-                else:
-                    print(f"[FORTUNA] ❌ Ningún canal válido ({', '.join(sinonimos)}) en {guild.name}", flush=True)
-                    
-        except Exception as e:
-            print(f"[FORTUNA] ❌ Error Crítico: {e}", flush=True)
+        logging.info("Running fortune loop")
+        if not self.bot.guilds:
+            return
+
+        fortune = random.choice(self.fortunes)
+        synonyms = ["general", "chat", "lobby", "principal"]
+
+        for guild in self.bot.guilds:
+            target_channel = None
+            for channel in guild.text_channels:
+                if (
+                    any(item in channel.name.lower() for item in synonyms)
+                    and channel.permissions_for(guild.me).send_messages
+                ):
+                    target_channel = channel
+                    break
+
+            if target_channel:
+                embed = discord.Embed(
+                    title="Fortuna del Día (´▽`)",
+                    description=fortune,
+                    color=discord.Color.purple(),
+                )
+                await target_channel.send(embed=embed)
+                logging.info("Sent fortune to %s in #%s", guild.name, target_channel.name)
+            else:
+                logging.info("No valid fortune channel in %s", guild.name)
 
     @fortune_loop.before_loop
     async def before_fortune_loop(self):
@@ -142,45 +107,25 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        # Ignorar mensajes del bot o de otros bots
         if message.author.id == self.bot.user.id or message.author.bot:
             return
         if message.guild is None:
             return
 
-        # Sistema de XP
-        guild_id = message.guild.id
-        user_id = message.author.id
-        current_time = time.time()
-        cooldown_key = (guild_id, user_id)
-        xp_cooldown_seconds = await self.settings.get_int(guild_id, "xp_cooldown_seconds")
-        xp_per_message = await self.settings.get_int(guild_id, "xp_per_message")
-        last_xp_time = self.xp_cooldown.get(cooldown_key, 0)
-        
-        if current_time - last_xp_time >= xp_cooldown_seconds:
-            xp_result = await self.db.actualizar_xp(
-                guild_id,
-                user_id,
-                message.author.name,
-                xp_per_message,
+        xp_result = await self.activity.record_message(
+            message.guild.id,
+            message.author.id,
+            message.author.name,
+        )
+        if xp_result and xp_result["subio_nivel"]:
+            await message.channel.send(
+                f"(´▽`){message.author.mention} - *¡Subiste al nivel {xp_result['nivel_actual']}!*"
             )
-            self.xp_cooldown[cooldown_key] = current_time
-            
-            if xp_result and xp_result['subio_nivel']:
-                await message.channel.send(
-                    f"(´▽`){message.author.mention} - *¡Subiste al nivel {xp_result['nivel_actual']}!*"
-                )
 
-        # Triggers de respuesta (solo en servidores, no en DM)
         if isinstance(message.channel, discord.TextChannel):
-            msg = message.content.lower()
-            triggers = await self.db.get_guild_triggers(guild_id)
-            if not triggers:
-                triggers = DEFAULT_TRIGGERS
-            for key, resp in triggers.items():
-                if key in msg:
-                    await message.channel.send(resp)
-                    break
+            response = await self.triggers.match_response(message.guild.id, message.content)
+            if response:
+                await message.channel.send(response)
 
     def _build_leaderboard_embed(self, leaderboard, daily=False):
         title = "Leaderboard Diario (´▽`) - Top 10" if daily else "Leaderboard (´▽`) - Top 10"
@@ -188,7 +133,7 @@ class Events(commands.Cog):
             title=title,
             description="Ranking de usuarios por nivel (๑•́ ω •̀๑)",
             color=discord.Color.gold(),
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         for idx, user in enumerate(leaderboard, 1):
@@ -203,11 +148,12 @@ class Events(commands.Cog):
             embed.add_field(
                 name=f"{medal} {user['username']}",
                 value=f"Nivel: **{user['nivel']}** | XP: **{user['xp']}**",
-                inline=False
+                inline=False,
             )
 
         embed.set_footer(text="¡Sigue subiendo de nivel! (´▽`)")
         return embed
+
 
 async def setup(bot):
     await bot.add_cog(Events(bot))

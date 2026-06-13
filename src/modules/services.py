@@ -1,252 +1,235 @@
-import discord
-from discord.ext import commands
-import os
-import requests
+from __future__ import annotations
+
 import re
-import random
 from collections import Counter
-from database.manager import DBManager
-from services.guild_settings import GuildSettingsService
-from services.profile_service import ProfileService
+
+import discord
+from discord import app_commands
+from discord.ext import commands
+
 
 class Services(commands.Cog):
+    profile_group = app_commands.Group(
+        name="profile", description="Comandos para gestionar tu perfil"
+    )
+    config_group = app_commands.Group(
+        name="config",
+        description="Comandos de configuración (Solo Admins)",
+        default_permissions=discord.Permissions(manage_guild=True),
+    )
+
     def __init__(self, bot):
         self.bot = bot
-        self.db = DBManager()
-        self.profile_service = ProfileService(self.db)
-        self.settings = GuildSettingsService(self.db)
-    
+        self.gif_client = bot.app.services.gifs
+        self.guild_settings = bot.app.services.guild_settings
+        self.leaderboard_service = bot.app.services.leaderboard
+        self.profile_service = bot.app.services.profiles
+        self.weather_client = bot.app.services.weather
 
-    @commands.command()
-    async def clima(self, ctx, *, ciudad_pais: str = None):
-        if ciudad_pais is None:
-            await ctx.send("[X] Uso: !clima <ciudad> [país]. Ejemplo: !clima Santiago Chile")
+    @app_commands.command(name="clima", description="Obtén el clima actual de una ciudad")
+    async def clima(self, interaction: discord.Interaction, ciudad_pais: str):
+        await interaction.response.defer()
+        ciudad, pais = self._parse_city_country(ciudad_pais.strip())
+        weather = await self.weather_client.current(ciudad, pais)
+        if weather is None:
+            await interaction.followup.send("(´；ω；`) Ciudad no encontrada.")
             return
-        
-        partes = ciudad_pais.rsplit(' ', 1)
-        if len(partes) == 2:
-            ciudad, pais = partes
-        else:
-            ciudad = partes[0]
-            pais = "Chile"
-        
-        api_key = os.getenv("WEATHER_API_KEY")
-        url = f'http://api.weatherapi.com/v1/current.json?key={api_key}&q={ciudad},{pais}'
-        respuesta = requests.get(url)
-        if respuesta.status_code == 200:
-            datos = respuesta.json()
-            temp = datos["current"]["temp_c"]
-            sensacion = datos["current"]["feelslike_c"]
-            hum = datos["current"]["humidity"]
-            cond = datos["current"]["condition"]["text"]
-            icon = datos["current"]["condition"]["icon"]
-            ciudad_nombre = datos["location"]["name"]
-            pais_nombre = datos["location"]["country"]
-            
-            embed = discord.Embed(
-                title=f"[***] {ciudad_nombre}, {pais_nombre}",
-                color=discord.Color.from_rgb(0, 191, 255)
-            )
-            embed.set_thumbnail(url=f"https:{icon}")
-            embed.add_field(name="[T] Temperatura", value=f"{temp}°C", inline=True)
-            embed.add_field(name="(´・ω・`) Sensación térmica", value=f"{sensacion}°C", inline=True)
-            embed.add_field(name="[~] Humedad", value=f"{hum}%", inline=True)
-            embed.add_field(name="[≈] Condición", value=cond, inline=False)
-            embed.set_footer(text="Datos provistos por WeatherAPI")
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send("(´；ω；`) Ciudad no encontrada.")
 
-    @commands.command()
-    async def gif(self, ctx, *, query: str):
-        api_key = os.getenv("GIPHY_API_KEY")
-        url = f"https://api.giphy.com/v1/gifs/search?api_key={api_key}&q={query}&limit=10&lang=es"
-        
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            if data['data']:
-                gif_random = random.choice(data['data'])
-                gif_url = gif_random['images']['original']['url']
-                embed = discord.Embed(title=f"GIF: {query.title()}", color=discord.Color.red())
-                embed.set_image(url=gif_url)
-                await ctx.send(embed=embed)
-            else:
-                await ctx.send(f"(´；ω；`) No se encontraron GIFs para '{query}'.")
-        else:
-            await ctx.send("(´；ω；`) Error al buscar el GIF...")
+        embed = discord.Embed(
+            title=f"[***] {weather.city}, {weather.country}",
+            color=discord.Color.from_rgb(0, 191, 255),
+        )
+        embed.set_thumbnail(url=weather.icon_url)
+        embed.add_field(name="[T] Temperatura", value=f"{weather.temperature_c}°C", inline=True)
+        embed.add_field(
+            name="(´・ω・`) Sensación térmica",
+            value=f"{weather.feels_like_c}°C",
+            inline=True,
+        )
+        embed.add_field(name="[~] Humedad", value=f"{weather.humidity}%", inline=True)
+        embed.add_field(name="[≈] Condición", value=weather.condition, inline=False)
+        embed.set_footer(text="Datos provistos por WeatherAPI")
+        await interaction.followup.send(embed=embed)
 
-    @commands.command()
-    async def historial(self, ctx):
-        canal = ctx.channel
-        mensajes = [m.content.lower() async for m in canal.history(limit=100)]
+    @app_commands.command(name="gif", description="Busca un GIF aleatorio")
+    async def gif(self, interaction: discord.Interaction, query: str):
+        await interaction.response.defer()
+        gif_url = await self.gif_client.random_gif_url(query)
+        if gif_url is None:
+            await interaction.followup.send(f"(´；ω；`) No se encontraron GIFs para '{query}'.")
+            return
+
+        embed = discord.Embed(title=f"GIF: {query.title()}", color=discord.Color.red())
+        embed.set_image(url=gif_url)
+        await interaction.followup.send(embed=embed)
+
+    @app_commands.command(
+        name="historial",
+        description="Muestra las 10 palabras más repetidas en los últimos 100 mensajes",
+    )
+    async def historial(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        mensajes = [m.content.lower() async for m in interaction.channel.history(limit=100)]
         palabras = []
         for texto in mensajes:
             texto = re.sub(r"[^a-zA-ZáéíóúÁÉÍÓÚüñ\s]", "", texto)
             palabras.extend(texto.split())
-        
+
         contador = Counter(palabras)
         res = "**Top 10 palabras (100 msgs):**\n"
-        for p, c in contador.most_common(10):
-            res += f"• {p}: {c}\n"
-        await ctx.send(res)
+        for palabra, count in contador.most_common(10):
+            res += f"• {palabra}: {count}\n"
+        await interaction.followup.send(res)
 
-    @commands.group(name="profile", aliases=["perfil"], invoke_without_command=True)
-    async def profile(self, ctx, user: discord.Member = None):
-        """Muestra el perfil del usuario con XP y campos sociales por servidor."""
-        if ctx.guild is None:
-            await ctx.send("(´；ω；`) Usa este comando dentro de un servidor.")
+    @profile_group.command(
+        name="view", description="Mira tu perfil o el de alguien en este servidor"
+    )
+    async def profile_view(self, interaction: discord.Interaction, user: discord.Member = None):
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
             return
 
         if user is None:
-            user = ctx.author
+            user = interaction.user
 
-        usuario = await self.profile_service.get_profile(ctx.guild.id, user)
-
+        await interaction.response.defer()
+        usuario = await self.profile_service.get_profile(interaction.guild.id, user)
         if usuario is None:
-            if user == ctx.author:
-                await self.profile_service.ensure_profile(ctx.guild.id, user)
-                usuario = await self.profile_service.get_profile(ctx.guild.id, user)
+            if user.id == interaction.user.id:
+                await self.profile_service.ensure_profile(interaction.guild.id, user)
+                usuario = await self.profile_service.get_profile(interaction.guild.id, user)
             else:
-                await ctx.send(
+                await interaction.followup.send(
                     f"(´・ω・`) Aún no veo un perfil de {user.mention} en este servidor.\n"
                     "Cuando esa persona escriba o use `!profile`, lo podré mostrar."
                 )
                 return
 
-        await ctx.send(embed=await self._build_profile_embed(user, usuario))
+        await interaction.followup.send(embed=await self._build_profile_embed(user, usuario))
 
-    @profile.command(name="edit")
-    async def profile_edit(self, ctx):
-        """Lista los campos editables del perfil."""
-        if ctx.guild is None:
-            await ctx.send("(´；ω；`) Usa este comando dentro de un servidor.")
+    @profile_group.command(name="edit", description="Mira qué campos puedes editar en tu perfil")
+    async def profile_edit(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
             return
 
         fields = await self.profile_service.available_fields()
         field_names = ", ".join(field["key"] for field in fields)
-        await ctx.send(
+        await interaction.response.send_message(
             "(´▽`) Puedes editar tu perfil por partes, sin rehacerlo completo.\n"
             f"Campos disponibles: **{field_names}**\n"
             "Ejemplos:\n"
-            "`!profile set github octocat`\n"
-            "`!profile set steam mi_usuario`\n"
-            "`!profile set website https://mi-sitio.cl`"
+            "`/profile set campo:github valor:octocat`\n"
+            "`/profile set campo:website valor:https://mi-sitio.cl`"
         )
 
-    @profile.command(name="set")
-    async def profile_set(self, ctx, field_key: str = None, *, value: str = None):
-        """Actualiza un campo individual del perfil."""
-        if ctx.guild is None:
-            await ctx.send("(´；ω；`) Usa este comando dentro de un servidor.")
-            return
-        if not field_key or not value:
-            await ctx.send(
-                "(´・ω・`) Me faltó saber qué quieres guardar.\n"
-                "Usa: `!profile set <campo> <valor>`\n"
-                "Ejemplos: `!profile set github octocat` o `!profile set steam mi_usuario`"
+    @profile_group.command(
+        name="set", description="Guarda o actualiza un campo en tu perfil social"
+    )
+    async def profile_set(self, interaction: discord.Interaction, campo: str, valor: str):
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
             )
             return
 
-        field = await self.profile_service.set_field(ctx.guild.id, ctx.author, field_key, value)
+        field = await self.profile_service.set_field(
+            interaction.guild.id, interaction.user, campo, valor
+        )
         if field is None:
             fields = await self.profile_service.available_fields()
             field_names = ", ".join(item["key"] for item in fields)
-            await ctx.send(
+            await interaction.response.send_message(
                 "(´；ω；`) No conozco ese campo para el perfil.\n"
                 f"Puedes usar: **{field_names}**\n"
-                "Mira la lista con `!profile edit`."
+                "Mira la lista con `/profile edit`.",
+                ephemeral=True,
             )
             return
 
-        await ctx.send(
+        await interaction.response.send_message(
             f"(´▽`) Listo, guardé **{field['display_name']}** en tu perfil de este servidor.\n"
-            "Puedes revisarlo con `!profile`."
+            "Puedes revisarlo con `/profile view`."
         )
 
-    @commands.command(aliases=["top"])
-    async def leaderboard(self, ctx):
-        """Muestra el Top 10 de usuarios con más nivel y XP"""
-        if ctx.guild is None:
-            await ctx.send("(´；ω；`) Usa este comando dentro de un servidor.")
-            return
-        try:
-            leaderboard = await self.db.get_leaderboard(ctx.guild.id, limit=10)
-            
-            if not leaderboard:
-                await ctx.send("(´；ω；`) Aún no hay datos para el leaderboard.")
-                return
-                
-            embed = discord.Embed(
-                title="Leaderboard (´▽`) - Top 10",
-                description="Ranking actual de usuarios por nivel (๑•́ ω •̀๑)",
-                color=discord.Color.gold()
+    @app_commands.command(name="leaderboard", description="Ranking actual de usuarios por nivel")
+    async def leaderboard(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
             )
-            
-            for idx, user in enumerate(leaderboard, 1):
-                if idx == 1:
-                    medal = "🌟 1º"
-                elif idx == 2:
-                    medal = "⭐ 2º"
-                elif idx == 3:
-                    medal = "✨ 3º"
-                else:
-                    medal = f"{idx}º"
-                embed.add_field(
-                    name=f"{medal} {user['username']}",
-                    value=f"Nivel: **{user['nivel']}** | XP: **{user['xp']}**",
-                    inline=False
-                )
-            
-            embed.set_footer(text="¡Sigue subiendo de nivel! (´▽`)")
-            await ctx.send(embed=embed)
-        except Exception as e:
-            await ctx.send(f"(´；ω；`) Error al obtener el leaderboard: {e}")
-
-    @commands.group(name="config", invoke_without_command=True)
-    @commands.has_guild_permissions(manage_guild=True)
-    async def config(self, ctx):
-        """Muestra las claves de configuración disponibles."""
-        if ctx.guild is None:
-            await ctx.send("(´；ω；`) Usa este comando dentro de un servidor.")
             return
-        keys = ", ".join(self.settings.available_keys())
-        await ctx.send(
+
+        leaderboard = await self.leaderboard_service.top_members(interaction.guild.id, limit=10)
+        if not leaderboard:
+            await interaction.response.send_message(
+                "(´；ω；`) Aún no hay datos para el leaderboard.", ephemeral=True
+            )
+            return
+
+        embed = discord.Embed(
+            title="Leaderboard (´▽`) - Top 10",
+            description="Ranking actual de usuarios por nivel (๑•́ ω •̀๑)",
+            color=discord.Color.gold(),
+        )
+        for idx, user in enumerate(leaderboard, 1):
+            medal = self._medal(idx)
+            embed.add_field(
+                name=f"{medal} {user['username']}",
+                value=f"Nivel: **{user['nivel']}** | XP: **{user['xp']}**",
+                inline=False,
+            )
+
+        embed.set_footer(text="¡Sigue subiendo de nivel! (´▽`)")
+        await interaction.response.send_message(embed=embed)
+
+    @config_group.command(
+        name="view", description="Muestra las opciones de configuración disponibles"
+    )
+    async def config_view(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
+            return
+        keys = ", ".join(self.guild_settings.available_keys())
+        await interaction.response.send_message(
             "(ง'̀-'́)ง Configuración de este servidor.\n"
             f"Opciones disponibles: **{keys}**\n"
             "Ejemplos:\n"
-            "`!config set leaderboard_channel_id #ranking`\n"
-            "`!config set xp_per_message 15`\n"
-            "`!config set xp_cooldown_seconds 60`"
+            "`/config set clave:leaderboard_channel_id valor:<id_del_canal>`\n"
+            "`/config set clave:xp_per_message valor:15`\n"
+            "`/config set clave:xp_cooldown_seconds valor:60`"
         )
 
-    @config.command(name="set")
-    @commands.has_guild_permissions(manage_guild=True)
-    async def config_set(self, ctx, key: str = None, *, value: str = None):
-        if ctx.guild is None:
-            await ctx.send("(´；ω；`) Usa este comando dentro de un servidor.")
-            return
-        if not key or value is None:
-            await ctx.send(
-                "(´・ω・`) Me faltó una clave o un valor para guardar.\n"
-                "Usa: `!config set <clave> <valor>`\n"
-                "Ejemplo: `!config set leaderboard_channel_id #ranking`"
+    @config_group.command(
+        name="set", description="Cambia el valor de una configuración del servidor"
+    )
+    async def config_set(self, interaction: discord.Interaction, clave: str, valor: str):
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
             )
             return
 
-        normalized_value = self._normalize_setting_value(ctx, key, value)
-        was_set = await self.settings.set(ctx.guild.id, key, normalized_value)
+        normalized_value = self._normalize_setting_value(clave, valor)
+        was_set = await self.guild_settings.set(interaction.guild.id, clave, normalized_value)
         if not was_set:
-            keys = ", ".join(self.settings.available_keys())
-            await ctx.send(
+            keys = ", ".join(self.guild_settings.available_keys())
+            await interaction.response.send_message(
                 "(´；ω；`) Esa configuración no existe todavía.\n"
                 f"Puedes cambiar: **{keys}**\n"
-                "Mira ejemplos con `!config`."
+                "Mira ejemplos con `/config view`.",
+                ephemeral=True,
             )
             return
 
-        await ctx.send(
-            f"(´▽`) Guardé `{key}` para este servidor.\n"
+        await interaction.response.send_message(
+            f"(´▽`) Guardé `{clave}` para este servidor.\n"
             "Los cambios se aplican solo aquí, no en otros servidores."
         )
 
@@ -261,7 +244,7 @@ class Services(commands.Cog):
 
         embed = discord.Embed(
             title=f"[Perfil] {usuario['username']}",
-            color=discord.Color.from_rgb(100, 150, 255)
+            color=discord.Color.from_rgb(100, 150, 255),
         )
         embed.set_thumbnail(url=user.display_avatar.url)
         embed.add_field(name="[*] Nivel", value=str(nivel), inline=True)
@@ -283,24 +266,45 @@ class Services(commands.Cog):
 
         return embed
 
-    def _normalize_setting_value(self, ctx, key, value):
+    def _normalize_setting_value(self, key: str, value: str) -> str:
         channel_settings = {
             "leaderboard_channel_id",
             "logs_channel_id",
             "welcome_channel_id",
         }
-        if key in channel_settings and ctx.message.channel_mentions:
-            return ctx.message.channel_mentions[0].id
+        if key in channel_settings:
+            match = re.search(r"<#(\d+)>", value)
+            if match:
+                return match.group(1)
         return value.strip()
 
-    async def cog_command_error(self, ctx, error):
-        if isinstance(error, commands.MissingPermissions):
-            await ctx.send(
-                "(´；ω；`) Esta parte es para admins del servidor.\n"
-                "Necesitas el permiso **Manage Guild** para cambiar la configuración."
-            )
-            return
-        raise error
+    def _parse_city_country(self, city_country: str) -> tuple[str, str]:
+        parts = city_country.rsplit(" ", 1)
+        if len(parts) == 2:
+            return parts[0], parts[1]
+        return parts[0], "Chile"
+
+    def _medal(self, position: int) -> str:
+        if position == 1:
+            return "🌟 1º"
+        if position == 2:
+            return "⭐ 2º"
+        if position == 3:
+            return "✨ 3º"
+        return f"{position}º"
+
+    async def cog_app_command_error(
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
+    ):
+        if isinstance(error, app_commands.MissingPermissions):
+            if not interaction.response.is_done():
+                await interaction.response.send_message(
+                    "(´；ω；`) Esta parte es para admins del servidor.\n"
+                    "Necesitas el permiso **Administrar Servidor**.",
+                    ephemeral=True,
+                )
+        else:
+            raise error
 
 
 async def setup(bot):

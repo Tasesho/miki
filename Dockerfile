@@ -1,23 +1,25 @@
-# Imagen base ligera (estilo minimalista que nos gusta)
 FROM python:3.11-slim
 
-# Directorio de trabajo
+# Configurar usuario no-root por seguridad
+RUN groupadd -r miki && useradd -r -g miki -d /app miki
+
 WORKDIR /app
 
-# Instalamos dependencias del sistema necesarias para algunas librerías de Python
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Variables de entorno de Python
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Copiamos requirements y los instalamos
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Instalar dependencias del proyecto usando el pyproject.toml
+COPY pyproject.toml ./
+RUN pip install --upgrade pip && \
+    pip install .
 
-ENV PYTHONPATH=/app/src
+# Crear volumen local para la base de datos y dar permisos al usuario
+RUN mkdir -p /app/data && chown -R miki:miki /app
 
-# Copiamos todo el código (incluyendo la carpeta src)
-COPY . .
+USER miki
+COPY --chown=miki:miki src/ ./src/
 
-# Ejecutamos el bot apuntando a la ruta correcta
 CMD ["python", "src/bot.py"]

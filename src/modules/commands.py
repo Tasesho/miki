@@ -1,77 +1,81 @@
+from __future__ import annotations
+
 import discord
+from discord import app_commands
 from discord.ext import commands
-import requests
+
 
 class Weather(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.api_key = "TU_API_KEY_AQUI"  
-        self.base_url = "http://api.openweathermap.org/data/2.5/weather?"
+        self.weather_client = bot.app.services.weather
 
-    def get_weather_data(self, city_name):
-        """Método auxiliar para pegarle a la API"""
-        complete_url = f"{self.base_url}appid={self.api_key}&q={city_name}&units=metric&lang=es"
-        response = requests.get(complete_url)
-        return response.json()
+    @app_commands.command(name="tiempo", description="Muestra el clima de una ciudad")
+    async def tiempo(self, interaction: discord.Interaction, ciudad: str):
+        await interaction.response.defer()
+        weather = await self.weather_client.current(ciudad)
+        if weather is None:
+            await interaction.followup.send(f" No pude encontrar la ciudad: **{ciudad}**")
+            return
 
-    @commands.command(name="tiempo", help="Muestra el clima de una ciudad.")
-    async def tiempo(self, ctx, *, ciudad: str):
-        # 1. Obtenemos los datos (Lógica de negocio)
-        data = self.get_weather_data(ciudad)
+        embed = discord.Embed(
+            title=f"Clima en {weather.city}, {weather.country}",
+            color=discord.Color.blue(),
+            description=weather.condition.capitalize(),
+        )
+        embed.add_field(name="Temperatura", value=f"{weather.temperature_c}°C", inline=True)
+        embed.add_field(name="Humedad", value=f"{weather.humidity}%", inline=True)
+        embed.set_thumbnail(url=weather.icon_url)
+        embed.set_footer(text=f"Solicitado por {interaction.user.name}")
+        await interaction.followup.send(embed=embed)
 
-        if data.get("cod") != "404":
-            main = data["main"]
-            weather = data["weather"][0]
-            
-            # 2. Construcción del Embed (Lógica de Interfaz/UI)
-            embed = discord.Embed(
-                title=f"Clima en {data['name']}, {data['sys']['country']}",
-                color=discord.Color.blue(),
-                description=weather["description"].capitalize()
-            )
-            embed.add_field(name="Temperatura", value=f"{main['temp']}°C", inline=True)
-            embed.add_field(name="Humedad", value=f"{main['humidity']}%", inline=True)
-            embed.set_thumbnail(url=f"http://openweathermap.org/img/wn/{weather['icon']}@2x.png")
-            embed.set_footer(text=f"Solicitado por {ctx.author.name}")
-
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send(f" No pude encontrar la ciudad: **{ciudad}**")
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="clear", help="Borra los últimos N mensajes del canal")
-    @commands.has_permissions(administrator=True)
-    @commands.bot_has_permissions(manage_messages=True)
-    async def clear(self, ctx, numero: int):
-        """
-        Borra los últimos N mensajes del canal (incluye el comando)
-        Solo funciona si el usuario es administrador
-        El bot necesita permiso de 'Manage Messages'
-        """
-        # Validar que el número sea positivo
+    @app_commands.command(name="clear", description="Borra los últimos N mensajes del canal")
+    @app_commands.checks.has_permissions(administrator=True)
+    @app_commands.checks.bot_has_permissions(manage_messages=True)
+    async def clear(self, interaction: discord.Interaction, numero: int):
         if numero <= 0:
-            await ctx.send("(´；ω；`) El número debe ser mayor a 0")
+            await interaction.response.send_message(
+                "(´；ω；`) El número debe ser mayor a 0", ephemeral=True
+            )
             return
-        
-        # Limitar a máximo 100 mensajes por seguridad
+
         if numero > 100:
-            await ctx.send("(´；ω；`) El máximo es 100 mensajes")
+            await interaction.response.send_message(
+                "(´；ω；`) El máximo es 100 mensajes", ephemeral=True
+            )
             numero = 100
-        
+
+        await interaction.response.defer(ephemeral=True)
         try:
-            # Borrar N+1 mensajes (N + el mensaje del comando)
-            deleted = await ctx.channel.purge(limit=numero + 1)
-            
-            # Enviar confirmación (este mensaje se autoborra en 3 segundos)
-            confirmation = await ctx.send(f"(´▽`) Borrados {len(deleted) - 1} mensajes")
-            await confirmation.delete(delay=3)
+            # Para Slash commands no hay mensaje de comando que borrar, limit=numero es exacto.
+            deleted = await interaction.channel.purge(limit=numero)
+            await interaction.followup.send(f"(´▽`) Borrados {len(deleted)} mensajes")
         except discord.Forbidden:
-            await ctx.send("(´；ω；`) No tengo permisos para borrar mensajes en este canal")
-        except Exception as e:
-            await ctx.send(f"(´；ω；`) Error: {e}")
+            await interaction.followup.send(
+                "(´；ω；`) No tengo permisos para borrar mensajes en este canal"
+            )
+        except Exception as exc:
+            await interaction.followup.send(f"(´；ω；`) Error: {exc}")
+
+    async def cog_app_command_error(
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
+    ):
+        if isinstance(error, app_commands.MissingPermissions):
+            await interaction.response.send_message(
+                "(´；ω；`) No tienes permisos para usar esto.", ephemeral=True
+            )
+        elif isinstance(error, app_commands.BotMissingPermissions):
+            await interaction.response.send_message(
+                "(´；ω；`) No tengo permisos suficientes.", ephemeral=True
+            )
+        else:
+            raise error
+
 
 async def setup(bot):
     await bot.add_cog(Weather(bot))

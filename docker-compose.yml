@@ -2,10 +2,15 @@ services:
   miki-bot:
     build: .
     container_name: miki_bot
-    restart: always
-    environment:
-      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
     env_file:
       - .env
+    environment:
+      MIKI_ENV: ${MIKI_ENV:-production}
+      DATABASE_PATH: ${DATABASE_PATH:-/app/data/miki.db}
+      PYTHONUNBUFFERED: "1"
     volumes:
-      - ./src/database:/app/src/database  # Persistencia para tu SQLite
+      - miki-data:/app/data
+
+volumes:
+  miki-data:
