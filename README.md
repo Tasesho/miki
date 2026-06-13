@@ -1,222 +1,82 @@
-# (´・ω・`) Discord Bot Miki
+# Miki Discord Bot
 
-![Version](https://img.shields.io/badge/version-1.5.0-blue)
-![Python](https://img.shields.io/badge/python-3.11+-green)
-![Discord.py](https://img.shields.io/badge/discord.py-2.0+-purple)
+Miki is a Python Discord bot built with `discord.py`, SQLite, and Docker. The project uses modular Cogs, a shared service layer, repositories for data access, and environment-based configuration for development, staging, and production.
 
-**Miki** is a modern and scalable Discord bot designed to interact with users through commands, text triggers, and integration with external APIs. With modular architecture and Docker support, it's easy to maintain and deploy.
+## Requirements
 
-## 📋 Table of Contents
+- Python 3.11+
+- Docker and Docker Compose for container deployment
+- A Discord bot token
 
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-  - [Local Installation](#local-installation)
-  - [Docker Installation](#docker-installation)
-- [Configuration](#configuration)
-- [Commands](#commands)
-- [Project Structure](#project-structure)
-- [Changelog](#changelog)
-- [License](#license)
+## Configuration
 
-## (´▽｀)ノ Features
-
-- (๑•́ ω •̀๑) **Interactive Commands**: Multiple commands with `!` prefix
-- (´・ω・`) **User Profiles & XP System**: Earn XP, level up, and showcase your Discord profile with social media links
-- ✨ **Social Media Integration**: Link your Twitter, GitHub, Instagram, and website to your profile
-- (´・ω・`) **Weather API Integration**: Check real-time weather with `!tiempo` or `!clima`
-- (´▽｀) **Giphy API Integration**: Search and share GIFs
--  **Daily Leaderboard**: Automatic Top 10 ranking at midnight (12 AM) with user levels and XP in #general
-- 🎯 **Fortune System**: Random wisdom quotes sent to #general every 6 hours
-- 🧹 **Moderation Tools**: Admin commands for channel management (bulk delete messages)
-- o(´▽｀)ノ **SQLite Database**: Persistent data storage with Docker volume support
-- (´・_・`) **Docker Ready**: Easy deployment with Docker Compose
-- (´▽｀) **Modular Architecture**: Organized and maintainable code
-- (´・ω・`) **Word Statistics**: Message analysis in channels
-
-## (´▽｀) Prerequisites
-
-### Option 1: Local Installation
-- **Python 3.11** or higher
-- **pip** (Python package manager)
-- **Virtual Environment** (recommended)
-
-### Option 2: Docker Installation
-- **Docker** 20.10 or higher
-- **Docker Compose** 2.0 or higher
-
-## (๑•́ ω •̀๑) Installation
-
-### Local Installation
-
-#### 1. Clone or download the project
+Copy the example file and fill in your values:
 
 ```bash
-cd /path/to/your/project
+cp .env.example .env
 ```
 
-#### 2. Create and activate a Virtual Environment
+Runtime environment variables:
 
-**On Windows:**
-```bash
-python -m venv venv
-call venv\Scripts\activate
+```env
+MIKI_ENV=development
+DISCORD_TOKEN=your_discord_bot_token
+DATABASE_PATH=data/miki-dev.db
+COMMAND_PREFIX=!
+LOG_LEVEL=INFO
+WEATHER_API_KEY=
+GIPHY_API_KEY=
 ```
 
-**On macOS/Linux:**
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
+`MIKI_ENV` supports `development`, `staging`, and `production`. The same codebase is used for all environments.
 
-#### 3. Install dependencies
+## Local Development
 
 ```bash
-pip install -r requirements.txt
-```
-
-#### 4. Configure Discord token
-
-Create a `.env` file in the project root:
-
-```bash
-DISCORD_TOKEN=your_token_here
-```
-
-(´；ω；`) **Important**: The token must have no spaces at the beginning or end.
-
-#### 5. Run the bot
-
-```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m pip install pytest==8.4.0 pytest-asyncio==1.0.0 ruff==0.11.13
 python src/bot.py
 ```
 
-### Docker Installation
-
-#### 1. Prerequisites
-
-Make sure Docker and Docker Compose are installed:
+## Docker
 
 ```bash
-docker --version
-docker-compose --version
+docker compose up -d --build
+docker compose logs -f miki-bot
+docker compose down
 ```
 
-#### 2. Configure Discord token
+Docker stores runtime data in the `miki-data` volume at `/app/data/miki.db`.
 
-Create a `.env` file in the project root:
+## Quality Checks
 
 ```bash
-DISCORD_TOKEN=your_token_here
+ruff check .
+ruff format --check .
+pytest
 ```
 
-#### 3. Run with Docker Compose
+## Architecture
 
-```bash
-docker-compose up -d
+```text
+src/
+├── app.py                     # Application container and dependency wiring
+├── bot.py                     # Discord entrypoint
+├── config.py                  # Environment configuration
+├── database/                  # SQLite connection and migrations
+├── modules/                   # Discord Cogs
+├── repositories/              # Data access layer
+├── services/                  # Reusable business logic
+└── setup/                     # Future interactive setup foundations
 ```
 
-#### 4. View logs
+Further documentation:
 
-```bash
-docker-compose logs -f miki-bot
-```
+- [Architecture](docs/ARCHITECTURE.md)
+- [Development Workflow](docs/WORKFLOW.md)
 
-#### 5. Stop the bot
+## Current Commands
 
-```bash
-docker-compose down
-```
-
-## (´・ω・`) Configuration
-
-### Environment Variables
-
-The `.env` file should contain:
-
-```env
-DISCORD_TOKEN=your_discord_token
-```
-
-**How to get your token:**
-1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
-2. Create a new application
-3. Go to "Bot" and create a bot
-4. Copy the token
-5. Place it in the `.env` file
-
-## ٩(◕‿◕。)۶ Commands
-
-Miki responds to the following commands (prefix `!`):
-
-| Command                       | Description                                                                    |
-| ----------------------------- | ------------------------------------------------------------------------------ |
-| `!perfil [@usuario]`          | View your profile or another user's profile with XP, levels, and social media. |
-| `!historial`                  | Shows the 10 most repeated words in the last 100 messages.                     |
-| `!say <text>`                 | Repeats the message you send.                                                  |
-| `!presentarse`                | The bot introduces itself.                                                     |
-| `!talk`                       | The bot greets you with a random message.                                      |
-| `!clima <city> [country]`     | Shows the current weather of a city (Weather API).                             |
-| `!tiempo <city>`              | Alternative command for weather.                                               |
-| `!gif <search>`               | Search and display a GIF (Giphy API).                                          |
-| `!clear <numero>`             | **Admin only** - Deletes the last N messages (max: 100).                       |
-| `!testdm`                     | Sends a test Direct Message to check if the bot can contact you.               |
-| `!ayuda`                      | Shows available commands.                                                      |
-
-## (´▽｀) Future Development: Slash Commands
-
-To align with Discord's modern standards, there is a plan to migrate all prefix-based commands (`!`) to **Slash Commands**. This will provide a more integrated and user-friendly experience with autocompletion and clear command structures directly within the Discord interface.
-
-## (´▽｀) Project Structure
-
-```
-miki/
-├── src/
-│   ├── bot.py              # Main bot file
-│   ├── config.py           # Configuration
-│   ├── database/
-│   │   ├── __init__.py
-│   │   └── manager.py      # Database manager
-│   └── modules/
-│       ├── __init__.py
-│       ├── basic.py        # Basic commands
-│       ├── commands.py     # Commands handler
-│       ├── events.py       # Bot events
-│       ├── services.py     # External services (Weather, Giphy)
-│       └── weather.py      # Weather API integration
-├── docker-compose.yml      # Docker Compose configuration
-├── Dockerfile              # Docker configuration
-├── requirements.txt        # Python dependencies
-├── .env                    # Environment variables (don't include in git)
-├── CHANGELOG.md           # Changelog
-└── README.md              # This file
-```
-
-## (´・ω・`) Changelog
-
-For all versions, new features and bugfixes, see [CHANGELOG.md](CHANGELOG.md).
-
-**Current Version**: 1.5.0
-
-## (๑•́ ω •̀๑) Development
-
-### Add a new command
-
-1. Create or edit a module in `src/modules/`
-2. Define your command using the `@bot.command()` decorator
-3. Import the module in `src/bot.py`
-
-### Add a new API
-
-1. Create a new file in `src/modules/services.py` or a new module
-2. Implement the integration
-3. Use it in your commands
-
-## (´▽｀) License
-
-This project is open source and available under the MIT License.
-
----
-
-**Developed by**: [Tasesho](https://github.com/Tasesho)  
-**GitHub**: [Miki Project](https://github.com/Tasesho/miki)
+Miki currently keeps the existing prefix commands, including profile, weather, GIF search, leaderboard, configuration, moderation cleanup, word history, and utility commands. This refactor does not add new user-facing features.

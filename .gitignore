@@ -1,11 +1,20 @@
-# Crea un .gitignore rápido y efectivo
-cat <<EOF > .gitignore
-.env
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-*.db
-.vscode/
-venv/
 .venv/
-EOF
+venv/
+env/
+
+# Environment
+.env
+
+# Database & Persistent Data
+data/
+*.db
+*.sqlite3
+
+# Testing & Tooling
+.pytest_cache/
+.ruff_cache/
+.coverage
