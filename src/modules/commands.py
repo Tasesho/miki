@@ -39,11 +39,15 @@ class Moderation(commands.Cog):
     @app_commands.checks.bot_has_permissions(manage_messages=True)
     async def clear(self, interaction: discord.Interaction, numero: int):
         if numero <= 0:
-            await interaction.response.send_message("(´；ω；`) El número debe ser mayor a 0", ephemeral=True)
+            await interaction.response.send_message(
+                "(´；ω；`) El número debe ser mayor a 0", ephemeral=True
+            )
             return
 
         if numero > 100:
-            await interaction.response.send_message("(´；ω；`) El máximo es 100 mensajes", ephemeral=True)
+            await interaction.response.send_message(
+                "(´；ω；`) El máximo es 100 mensajes", ephemeral=True
+            )
             numero = 100
 
         await interaction.response.defer(ephemeral=True)
@@ -52,15 +56,23 @@ class Moderation(commands.Cog):
             deleted = await interaction.channel.purge(limit=numero)
             await interaction.followup.send(f"(´▽`) Borrados {len(deleted)} mensajes")
         except discord.Forbidden:
-            await interaction.followup.send("(´；ω；`) No tengo permisos para borrar mensajes en este canal")
+            await interaction.followup.send(
+                "(´；ω；`) No tengo permisos para borrar mensajes en este canal"
+            )
         except Exception as exc:
             await interaction.followup.send(f"(´；ω；`) Error: {exc}")
 
-    async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+    async def cog_app_command_error(
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
+    ):
         if isinstance(error, app_commands.MissingPermissions):
-            await interaction.response.send_message("(´；ω；`) No tienes permisos para usar esto.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´；ω；`) No tienes permisos para usar esto.", ephemeral=True
+            )
         elif isinstance(error, app_commands.BotMissingPermissions):
-            await interaction.response.send_message("(´；ω；`) No tengo permisos suficientes.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´；ω；`) No tengo permisos suficientes.", ephemeral=True
+            )
         else:
             raise error
 

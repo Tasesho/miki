@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 DEFAULT_PROFILE_FIELDS = (
     ("twitter", "Twitter", "https://twitter.com/{value}"),
     ("github", "GitHub", "https://github.com/{value}"),

@@ -21,10 +21,7 @@ class ProfileRepository:
             ) as cursor:
                 rows = await cursor.fetchall()
 
-        return [
-            {"key": row[0], "display_name": row[1], "url_template": row[2]}
-            for row in rows
-        ]
+        return [{"key": row[0], "display_name": row[1], "url_template": row[2]} for row in rows]
 
     async def get_field(self, field_key: str) -> dict | None:
         async with self.database.connect() as db:

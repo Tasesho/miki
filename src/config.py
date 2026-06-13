@@ -6,7 +6,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-
 VALID_ENVIRONMENTS = {"development", "staging", "production"}
 
 
@@ -21,7 +20,7 @@ class Settings:
     log_level: str
 
     @classmethod
-    def from_env(cls, *, require_token: bool = False) -> "Settings":
+    def from_env(cls, *, require_token: bool = False) -> Settings:
         load_dotenv()
 
         environment = os.getenv("MIKI_ENV", "development").lower()

@@ -32,7 +32,7 @@ class MikiBot(commands.Bot):
                     logging.info("Loaded module %s", module_name)
                 except Exception:
                     logging.exception("Error loading module %s", module_name)
-        
+
         synced = await self.tree.sync()
         logging.info("Synced %d slash commands", len(synced))
 

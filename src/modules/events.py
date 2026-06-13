@@ -83,9 +83,10 @@ class Events(commands.Cog):
         for guild in self.bot.guilds:
             target_channel = None
             for channel in guild.text_channels:
-                if any(item in channel.name.lower() for item in synonyms) and channel.permissions_for(
-                    guild.me
-                ).send_messages:
+                if (
+                    any(item in channel.name.lower() for item in synonyms)
+                    and channel.permissions_for(guild.me).send_messages
+                ):
                     target_channel = channel
                     break
 

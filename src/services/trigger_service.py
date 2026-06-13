@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 DEFAULT_TRIGGERS = {
     "hola": "ola   (●'◡'●)",
     "xao": "Hasta la Proxima   (˶˃ ᵕ ˂˶) .ᐟ.ᐟ ",

@@ -9,11 +9,13 @@ from discord.ext import commands
 
 
 class Services(commands.Cog):
-    profile_group = app_commands.Group(name="profile", description="Comandos para gestionar tu perfil")
+    profile_group = app_commands.Group(
+        name="profile", description="Comandos para gestionar tu perfil"
+    )
     config_group = app_commands.Group(
-        name="config", 
-        description="Comandos de configuración (Solo Admins)", 
-        default_permissions=discord.Permissions(manage_guild=True)
+        name="config",
+        description="Comandos de configuración (Solo Admins)",
+        default_permissions=discord.Permissions(manage_guild=True),
     )
 
     def __init__(self, bot):
@@ -61,7 +63,10 @@ class Services(commands.Cog):
         embed.set_image(url=gif_url)
         await interaction.followup.send(embed=embed)
 
-    @app_commands.command(name="historial", description="Muestra las 10 palabras más repetidas en los últimos 100 mensajes")
+    @app_commands.command(
+        name="historial",
+        description="Muestra las 10 palabras más repetidas en los últimos 100 mensajes",
+    )
     async def historial(self, interaction: discord.Interaction):
         await interaction.response.defer()
         mensajes = [m.content.lower() async for m in interaction.channel.history(limit=100)]
@@ -76,10 +81,14 @@ class Services(commands.Cog):
             res += f"• {palabra}: {count}\n"
         await interaction.followup.send(res)
 
-    @profile_group.command(name="view", description="Mira tu perfil o el de alguien en este servidor")
+    @profile_group.command(
+        name="view", description="Mira tu perfil o el de alguien en este servidor"
+    )
     async def profile_view(self, interaction: discord.Interaction, user: discord.Member = None):
         if interaction.guild is None:
-            await interaction.response.send_message("(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
             return
 
         if user is None:
@@ -103,7 +112,9 @@ class Services(commands.Cog):
     @profile_group.command(name="edit", description="Mira qué campos puedes editar en tu perfil")
     async def profile_edit(self, interaction: discord.Interaction):
         if interaction.guild is None:
-            await interaction.response.send_message("(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
             return
 
         fields = await self.profile_service.available_fields()
@@ -116,13 +127,19 @@ class Services(commands.Cog):
             "`/profile set campo:website valor:https://mi-sitio.cl`"
         )
 
-    @profile_group.command(name="set", description="Guarda o actualiza un campo en tu perfil social")
+    @profile_group.command(
+        name="set", description="Guarda o actualiza un campo en tu perfil social"
+    )
     async def profile_set(self, interaction: discord.Interaction, campo: str, valor: str):
         if interaction.guild is None:
-            await interaction.response.send_message("(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
             return
 
-        field = await self.profile_service.set_field(interaction.guild.id, interaction.user, campo, valor)
+        field = await self.profile_service.set_field(
+            interaction.guild.id, interaction.user, campo, valor
+        )
         if field is None:
             fields = await self.profile_service.available_fields()
             field_names = ", ".join(item["key"] for item in fields)
@@ -130,7 +147,7 @@ class Services(commands.Cog):
                 "(´；ω；`) No conozco ese campo para el perfil.\n"
                 f"Puedes usar: **{field_names}**\n"
                 "Mira la lista con `/profile edit`.",
-                ephemeral=True
+                ephemeral=True,
             )
             return
 
@@ -142,12 +159,16 @@ class Services(commands.Cog):
     @app_commands.command(name="leaderboard", description="Ranking actual de usuarios por nivel")
     async def leaderboard(self, interaction: discord.Interaction):
         if interaction.guild is None:
-            await interaction.response.send_message("(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
             return
 
         leaderboard = await self.leaderboard_service.top_members(interaction.guild.id, limit=10)
         if not leaderboard:
-            await interaction.response.send_message("(´；ω；`) Aún no hay datos para el leaderboard.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´；ω；`) Aún no hay datos para el leaderboard.", ephemeral=True
+            )
             return
 
         embed = discord.Embed(
@@ -166,10 +187,14 @@ class Services(commands.Cog):
         embed.set_footer(text="¡Sigue subiendo de nivel! (´▽`)")
         await interaction.response.send_message(embed=embed)
 
-    @config_group.command(name="view", description="Muestra las opciones de configuración disponibles")
+    @config_group.command(
+        name="view", description="Muestra las opciones de configuración disponibles"
+    )
     async def config_view(self, interaction: discord.Interaction):
         if interaction.guild is None:
-            await interaction.response.send_message("(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
             return
         keys = ", ".join(self.guild_settings.available_keys())
         await interaction.response.send_message(
@@ -181,10 +206,14 @@ class Services(commands.Cog):
             "`/config set clave:xp_cooldown_seconds valor:60`"
         )
 
-    @config_group.command(name="set", description="Cambia el valor de una configuración del servidor")
+    @config_group.command(
+        name="set", description="Cambia el valor de una configuración del servidor"
+    )
     async def config_set(self, interaction: discord.Interaction, clave: str, valor: str):
         if interaction.guild is None:
-            await interaction.response.send_message("(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
             return
 
         normalized_value = self._normalize_setting_value(clave, valor)
@@ -195,7 +224,7 @@ class Services(commands.Cog):
                 "(´；ω；`) Esa configuración no existe todavía.\n"
                 f"Puedes cambiar: **{keys}**\n"
                 "Mira ejemplos con `/config view`.",
-                ephemeral=True
+                ephemeral=True,
             )
             return
 
@@ -264,13 +293,15 @@ class Services(commands.Cog):
             return "✨ 3º"
         return f"{position}º"
 
-    async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+    async def cog_app_command_error(
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
+    ):
         if isinstance(error, app_commands.MissingPermissions):
             if not interaction.response.is_done():
                 await interaction.response.send_message(
                     "(´；ω；`) Esta parte es para admins del servidor.\n"
                     "Necesitas el permiso **Administrar Servidor**.",
-                    ephemeral=True
+                    ephemeral=True,
                 )
         else:
             raise error
