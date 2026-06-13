@@ -103,14 +103,15 @@ class Events(commands.Cog):
 
             target_channel = None
             channel_id = await self.guild_settings.get_int(guild.id, "fortune_channel_id")
-            
+
             if channel_id:
                 target_channel = guild.get_channel(channel_id)
             else:
                 for channel in guild.text_channels:
-                    if any(item in channel.name.lower() for item in synonyms) and channel.permissions_for(
-                        guild.me
-                    ).send_messages:
+                    if (
+                        any(item in channel.name.lower() for item in synonyms)
+                        and channel.permissions_for(guild.me).send_messages
+                    ):
                         target_channel = channel
                         break
 

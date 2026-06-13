@@ -238,7 +238,10 @@ class Services(commands.Cog):
     )
     @app_commands.describe(canal="Canal para el ranking", hora="Hora militar (ej: 14 para 2 PM)")
     async def config_leaderboard(
-        self, interaction: discord.Interaction, canal: discord.TextChannel, hora: app_commands.Range[int, 0, 23]
+        self,
+        interaction: discord.Interaction,
+        canal: discord.TextChannel,
+        hora: app_commands.Range[int, 0, 23],
     ):
         if interaction.guild is None:
             await interaction.response.send_message(
@@ -251,7 +254,7 @@ class Services(commands.Cog):
 
         await interaction.response.send_message(
             f"(´▽`) Listo. El leaderboard aparecerá a las **{hora}:00** en {canal.mention}.",
-            ephemeral=True
+            ephemeral=True,
         )
 
     @config_group.command(
@@ -259,7 +262,10 @@ class Services(commands.Cog):
     )
     @app_commands.describe(canal="Canal para la fortuna", hora="Hora militar (ej: 8 para 8 AM)")
     async def config_fortune(
-        self, interaction: discord.Interaction, canal: discord.TextChannel, hora: app_commands.Range[int, 0, 23]
+        self,
+        interaction: discord.Interaction,
+        canal: discord.TextChannel,
+        hora: app_commands.Range[int, 0, 23],
     ):
         if interaction.guild is None:
             await interaction.response.send_message(
@@ -272,7 +278,7 @@ class Services(commands.Cog):
 
         await interaction.response.send_message(
             f"(´▽`) Listo. La fortuna diaria aparecerá a las **{hora}:00** en {canal.mention}.",
-            ephemeral=True
+            ephemeral=True,
         )
 
     async def _build_profile_embed(self, user, usuario):
