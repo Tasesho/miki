@@ -7,6 +7,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from setup.ui import SetupDropdown
+
 
 class Services(commands.Cog):
     profile_group = app_commands.Group(
@@ -15,6 +17,11 @@ class Services(commands.Cog):
     config_group = app_commands.Group(
         name="config",
         description="Comandos de configuración (Solo Admins)",
+        default_permissions=discord.Permissions(manage_guild=True),
+    )
+    setup_group = app_commands.Group(
+        name="setup",
+        description="Asistente interactivo de configuración (Solo Admins)",
         default_permissions=discord.Permissions(manage_guild=True),
     )
 
@@ -281,6 +288,25 @@ class Services(commands.Cog):
             ephemeral=True,
         )
 
+    @setup_group.command(name="start", description="Inicia el menú interactivo de configuración")
+    async def setup_start(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
+            return
+
+        setup_manager = self.bot.app.services.setup_manager
+        view = discord.ui.View()
+        view.add_item(SetupDropdown(setup_manager, interaction.guild.id, interaction.user.id))
+
+        embed = discord.Embed(
+            title="🔧 Asistente de Configuración",
+            description="Selecciona el módulo que deseas configurar en el menú desplegable.",
+            color=discord.Color.green(),
+        )
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
     async def _build_profile_embed(self, user, usuario):
         xp_actual = usuario["xp"]
         nivel = usuario["nivel"]
@@ -317,6 +343,8 @@ class Services(commands.Cog):
     def _normalize_setting_value(self, key: str, value: str) -> str:
         channel_settings = {
             "leaderboard_channel_id",
+            "fortune_channel_id",
+            "general_channel_id",
             "logs_channel_id",
             "welcome_channel_id",
         }

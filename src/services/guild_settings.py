@@ -3,6 +3,10 @@ class GuildSettingsService:
         "leaderboard_channel_id": None,
         "logs_channel_id": None,
         "welcome_channel_id": None,
+        "fortune_channel_id": None,
+        "general_channel_id": None,
+        "leaderboard_hour": "0",
+        "fortune_hour": "12",
         "xp_per_message": "10",
         "xp_cooldown_seconds": "60",
     }
