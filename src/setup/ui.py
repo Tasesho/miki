@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import discord
 
-from setup.base import SetupManager
+from setup.base import BaseSetupView, SetupManager
 
 
 class SetupDropdown(discord.ui.Select):
@@ -48,3 +48,85 @@ class SetupDropdown(discord.ui.Select):
             await interaction.response.send_message(
                 "(´・ω・`) No se pudo cargar el módulo.", ephemeral=True
             )
+
+
+class ChannelSetupView(BaseSetupView):
+    def __init__(self, guild_id: int, user_id: int, guild_settings):
+        super().__init__(guild_id, user_id)
+        self.guild_settings = guild_settings
+
+    @discord.ui.select(
+        cls=discord.ui.ChannelSelect,
+        channel_types=[discord.ChannelType.text],
+        placeholder="🏆 Selecciona canal para Leaderboard...",
+        row=0,
+    )
+    async def leaderboard_select(
+        self, interaction: discord.Interaction, select: discord.ui.ChannelSelect
+    ):
+        was_set = await self.guild_settings.set(
+            self.guild_id, "leaderboard_channel_id", str(select.values[0].id)
+        )
+        if was_set:
+            await interaction.response.send_message(
+                f"(´▽`) Canal de Leaderboard configurado: {select.values[0].mention}",
+                ephemeral=True,
+            )
+        else:
+            await interaction.response.send_message(
+                "(´；ω；`) Error: 'leaderboard_channel_id' no es válida en GuildSettings.",
+                ephemeral=True,
+            )
+
+    @discord.ui.select(
+        cls=discord.ui.ChannelSelect,
+        channel_types=[discord.ChannelType.text],
+        placeholder="🔮 Selecciona canal para Fortuna...",
+        row=1,
+    )
+    async def fortune_select(
+        self, interaction: discord.Interaction, select: discord.ui.ChannelSelect
+    ):
+        was_set = await self.guild_settings.set(
+            self.guild_id, "fortune_channel_id", str(select.values[0].id)
+        )
+        if was_set:
+            await interaction.response.send_message(
+                f"(´▽`) Canal de Fortuna configurado: {select.values[0].mention}", ephemeral=True
+            )
+        else:
+            await interaction.response.send_message(
+                "(´；ω；`) Error: 'fortune_channel_id' no es válida en GuildSettings.",
+                ephemeral=True,
+            )
+
+    @discord.ui.select(
+        cls=discord.ui.ChannelSelect,
+        channel_types=[discord.ChannelType.text],
+        placeholder="✨ Selecciona canal principal (Chat/XP)...",
+        row=2,
+    )
+    async def general_select(
+        self, interaction: discord.Interaction, select: discord.ui.ChannelSelect
+    ):
+        was_set = await self.guild_settings.set(
+            self.guild_id, "general_channel_id", str(select.values[0].id)
+        )
+        if was_set:
+            await interaction.response.send_message(
+                f"(´▽`) Canal principal configurado: {select.values[0].mention}", ephemeral=True
+            )
+        else:
+            await interaction.response.send_message(
+                "(´；ω；`) Error: 'general_channel_id' no es válida en GuildSettings.",
+                ephemeral=True,
+            )
+
+    @discord.ui.button(label="Terminar Configuración", style=discord.ButtonStyle.green, row=3)
+    async def finish_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        for item in self.children:
+            item.disabled = True
+        await interaction.response.edit_message(
+            content="(´▽`) ¡Configuración de canales completada exitosamente! Ya estoy listo para funcionar.",
+            view=self,
+        )

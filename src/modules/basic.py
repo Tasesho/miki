@@ -111,7 +111,17 @@ class Basic(commands.Cog):
         )
 
         embed.set_footer(text="¡Diviértete usando Miki! (´▽`)")
-        await interaction.response.send_message(embed=embed)
+
+        try:
+            await interaction.user.send(embed=embed)
+            await interaction.response.send_message(
+                "(´▽`) ¡Te he enviado la lista de comandos por mensaje directo!", ephemeral=True
+            )
+        except discord.Forbidden:
+            await interaction.response.send_message(
+                "(´；ω；`) No puedo enviarte el menú de ayuda. Parece que tienes los Mensajes Directos desactivados en este servidor.",
+                ephemeral=True,
+            )
 
 
 async def setup(bot):

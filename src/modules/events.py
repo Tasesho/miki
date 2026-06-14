@@ -106,14 +106,6 @@ class Events(commands.Cog):
 
             if channel_id:
                 target_channel = guild.get_channel(channel_id)
-            else:
-                for channel in guild.text_channels:
-                    if (
-                        any(item in channel.name.lower() for item in synonyms)
-                        and channel.permissions_for(guild.me).send_messages
-                    ):
-                        target_channel = channel
-                        break
 
             if target_channel:
                 embed = discord.Embed(
@@ -131,10 +123,35 @@ class Events(commands.Cog):
         await self.bot.wait_until_ready()
 
     @commands.Cog.listener()
+    async def on_guild_join(self, guild: discord.Guild):
+        for channel in guild.text_channels:
+            if channel.permissions_for(guild.me).send_messages:
+                embed = discord.Embed(
+                    title="¡Hola a todos! Soy Miki (´▽`)",
+                    description=(
+                        "¡Gracias por invitarme al servidor!\n\n"
+                        "Para que pueda empezar a interactuar, ganar XP y funcionar correctamente, "
+                        "un administrador debe ejecutar el siguiente comando:\n\n"
+                        "👉 **`/setup start`**\n\n"
+                        "Esto abrirá un menú interactivo para configurar mis canales. ¡Nos vemos en el chat! (๑•́ ω •̀๑)"
+                    ),
+                    color=discord.Color.green(),
+                )
+                await channel.send(embed=embed)
+                break
+
+    @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.id == self.bot.user.id or message.author.bot:
             return
         if message.guild is None:
+            return
+
+        general_channel_id = await self.guild_settings.get_int(
+            message.guild.id, "general_channel_id"
+        )
+        # Si el canal general no ha sido configurado o el mensaje no es en él, lo ignoramos por completo
+        if not general_channel_id or message.channel.id != general_channel_id:
             return
 
         xp_result = await self.activity.record_message(

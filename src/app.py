@@ -16,7 +16,9 @@ from services.guild_settings import GuildSettingsService
 from services.leaderboard_service import LeaderboardService
 from services.profile_service import ProfileService
 from services.trigger_service import TriggerService
+from setup.base import SetupManager
 from setup.service import SetupStateService
+from setup.ui import ChannelSetupView
 
 
 @dataclass
@@ -35,6 +37,7 @@ class Services:
     leaderboard: LeaderboardService
     profiles: ProfileService
     setup_state: SetupStateService
+    setup_manager: SetupManager
     triggers: TriggerService
     weather: WeatherClient
     gifs: GifClient
@@ -54,6 +57,13 @@ class Application:
         )
 
         guild_settings = GuildSettingsService(self.repositories.guilds)
+
+        setup_manager = SetupManager()
+        setup_manager.register_module(
+            "Canales Básicos",
+            lambda guild_id, user_id: ChannelSetupView(guild_id, user_id, guild_settings),
+        )
+
         self.services = Services(
             activity=ActivityService(self.repositories.users, guild_settings),
             guild_modules=GuildModuleService(self.repositories.guilds),
@@ -61,6 +71,7 @@ class Application:
             leaderboard=LeaderboardService(self.repositories.users),
             profiles=ProfileService(self.repositories.users, self.repositories.profiles),
             setup_state=SetupStateService(self.repositories.setup_state),
+            setup_manager=setup_manager,
             triggers=TriggerService(self.repositories.guilds),
             weather=WeatherClient(settings.weather_api_key),
             gifs=GifClient(settings.giphy_api_key),
