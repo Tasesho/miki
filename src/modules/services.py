@@ -233,6 +233,54 @@ class Services(commands.Cog):
             "Los cambios se aplican solo aquí, no en otros servidores."
         )
 
+    @config_group.command(
+        name="leaderboard", description="Configura el canal y hora (0-23) del Top 10 diario"
+    )
+    @app_commands.describe(canal="Canal para el ranking", hora="Hora militar (ej: 14 para 2 PM)")
+    async def config_leaderboard(
+        self,
+        interaction: discord.Interaction,
+        canal: discord.TextChannel,
+        hora: app_commands.Range[int, 0, 23],
+    ):
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
+            return
+
+        await self.guild_settings.set(interaction.guild.id, "leaderboard_channel_id", str(canal.id))
+        await self.guild_settings.set(interaction.guild.id, "leaderboard_hour", str(hora))
+
+        await interaction.response.send_message(
+            f"(´▽`) Listo. El leaderboard aparecerá a las **{hora}:00** en {canal.mention}.",
+            ephemeral=True,
+        )
+
+    @config_group.command(
+        name="fortune", description="Configura el canal y hora (0-23) de la Fortuna del Día"
+    )
+    @app_commands.describe(canal="Canal para la fortuna", hora="Hora militar (ej: 8 para 8 AM)")
+    async def config_fortune(
+        self,
+        interaction: discord.Interaction,
+        canal: discord.TextChannel,
+        hora: app_commands.Range[int, 0, 23],
+    ):
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
+            return
+
+        await self.guild_settings.set(interaction.guild.id, "fortune_channel_id", str(canal.id))
+        await self.guild_settings.set(interaction.guild.id, "fortune_hour", str(hora))
+
+        await interaction.response.send_message(
+            f"(´▽`) Listo. La fortuna diaria aparecerá a las **{hora}:00** en {canal.mention}.",
+            ephemeral=True,
+        )
+
     async def _build_profile_embed(self, user, usuario):
         xp_actual = usuario["xp"]
         nivel = usuario["nivel"]

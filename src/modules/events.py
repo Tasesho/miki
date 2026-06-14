@@ -49,10 +49,20 @@ class Events(commands.Cog):
         self.daily_leaderboard.cancel()
         self.fortune_loop.cancel()
 
-    @tasks.loop(hours=24)
+    @tasks.loop(minutes=1)
     async def daily_leaderboard(self):
-        logging.info("Running daily leaderboard loop")
+        now = datetime.now()
+        if now.minute != 0:
+            return
+
+        logging.info("Running daily leaderboard loop check")
         for guild in self.bot.guilds:
+            target_hour = await self.guild_settings.get_int(guild.id, "leaderboard_hour")
+            if target_hour is None:
+                target_hour = 0  # Hora por defecto: medianoche (00:00)
+            if now.hour != target_hour:
+                continue
+
             channel_id = await self.guild_settings.get_int(guild.id, "leaderboard_channel_id")
             if channel_id is None:
                 logging.info("No leaderboard channel configured in %s", guild.name)
@@ -71,24 +81,39 @@ class Events(commands.Cog):
     async def before_daily_leaderboard(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(hours=12)
+    @tasks.loop(minutes=1)
     async def fortune_loop(self):
-        logging.info("Running fortune loop")
+        now = datetime.now()
+        if now.minute != 0:
+            return
+
         if not self.bot.guilds:
             return
 
+        logging.info("Running fortune loop check")
         fortune = random.choice(self.fortunes)
         synonyms = ["general", "chat", "lobby", "principal"]
 
         for guild in self.bot.guilds:
+            target_hour = await self.guild_settings.get_int(guild.id, "fortune_hour")
+            if target_hour is None:
+                target_hour = 12  # Hora por defecto: mediodía (12:00)
+            if now.hour != target_hour:
+                continue
+
             target_channel = None
-            for channel in guild.text_channels:
-                if (
-                    any(item in channel.name.lower() for item in synonyms)
-                    and channel.permissions_for(guild.me).send_messages
-                ):
-                    target_channel = channel
-                    break
+            channel_id = await self.guild_settings.get_int(guild.id, "fortune_channel_id")
+
+            if channel_id:
+                target_channel = guild.get_channel(channel_id)
+            else:
+                for channel in guild.text_channels:
+                    if (
+                        any(item in channel.name.lower() for item in synonyms)
+                        and channel.permissions_for(guild.me).send_messages
+                    ):
+                        target_channel = channel
+                        break
 
             if target_channel:
                 embed = discord.Embed(
