@@ -2,6 +2,13 @@
 
 This document records all versions of **BOT_MIKI** and its changes.
 
+## [2.2.0] - Interactive Setup & UX Polish
+- **Feature**: Implemented `/setup start` interactive onboarding menu using native Discord UI dropdowns for quick channel configuration.
+- **Feature**: Added an automatic welcome message upon joining a new guild, prompting administrators to run the setup command.
+- **UX**: The `/ayuda` command now delivers the help menu directly via DM, with a graceful ephemeral fallback if the user's DMs are closed.
+- **Fix**: Added missing `fortune_channel_id` and `general_channel_id` keys to the configuration whitelist to ensure database persistence.
+- **Fix**: The bot now correctly ignores messages outside the designated general channel, preventing unintended XP accumulation and trigger spam.
+
 ## [2.1.0] - Foundations Update
 - **Major Refactor**: The whole repository was updated to be a better foundation for future changes (Preparing for Miki V2.0 Phase 1).
 - **Commands**: Migrated all prefix commands to native Discord Slash Commands (`/`).

@@ -92,7 +92,6 @@ class Events(commands.Cog):
 
         logging.info("Running fortune loop check")
         fortune = random.choice(self.fortunes)
-        synonyms = ["general", "chat", "lobby", "principal"]
 
         for guild in self.bot.guilds:
             target_hour = await self.guild_settings.get_int(guild.id, "fortune_hour")
