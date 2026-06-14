@@ -2,6 +2,18 @@
 
 This document records all versions of **BOT_MIKI** and its changes.
 
+## [2.1.0] - Foundations Update
+- **Major Refactor**: The whole repository was updated to be a better foundation for future changes (Preparing for Miki V2.0 Phase 1).
+- **Commands**: Migrated all prefix commands to native Discord Slash Commands (`/`).
+- **Architecture**: Implemented Dependency Injection with Services and Repositories. Business logic is now decoupled from Discord UI.
+- **Infrastructure**: Added GitHub Actions CI/CD pipeline for automated testing and linting (Ruff + Pytest).
+- **Docker**: Hardened Docker image to run rootless, optimizing caching and security.
+- **Configuration**: Replaced `requirements.txt` completely with a modern `pyproject.toml` setup.
+- **Security**: Updated `aiohttp` to resolve a known Zip Bomb DoS vulnerability.
+- **UX/QoL**: Added specific `/config leaderboard` and `/config fortune` slash commands with military time and channel selection.
+- **Enhancement**: Refactored `tasks.loop` in events to support dynamic, per-server configurable execution times.
+- **Setup**: Established foundational architecture for a future Interactive Setup UI using Views and Select Menus.
+
 ## [2.0.0] - 2026-05-31
 - **Major Release**: Miki now treats each Discord server as its own little world (´▽`)ノ
 - **Architecture**: Refactored the data model around `guild_id` so profiles, XP, levels, leaderboard, settings, and future social systems can live independently per server.
