@@ -10,7 +10,4 @@ services:
       DATABASE_PATH: ${DATABASE_PATH:-/app/data/miki.db}
       PYTHONUNBUFFERED: "1"
     volumes:
-      - miki-data:/app/data
-
-volumes:
-  miki-data:
+      - ./data:/app/data
