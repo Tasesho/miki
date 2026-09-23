@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Miki · Welcome Cards</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+  </head>
+  <body>
+    <main>
+      <header><p class="eyebrow">MIKI DASHBOARD</p><h1>Welcome cards</h1><p>Configure the card sent when a member joins.</p></header>
+      <section class="guild-picker"><label>Server ID <input id="guild-id" inputmode="numeric" placeholder="Discord server ID"></label><button id="load" type="button">Load settings</button></section>
+      <p id="status" role="status">Enter a server ID to begin.</p>
+      <div class="workspace">
+        <form id="settings-form">
+          <label class="switch"><input name="enabled" type="checkbox"><span>Enable welcome cards</span></label>
+          <label>Welcome channel ID <input name="channel_id" inputmode="numeric" placeholder="123456789012345678"></label>
+          <label>Title <input name="title" maxlength="200"></label>
+          <label>Message <textarea name="message" maxlength="200" rows="3"></textarea></label>
+          <label>Extra message (sent with the image) <textarea name="extra_message" maxlength="2000" rows="4" placeholder="Welcome to {server.name}, {user}! Visit {channel:reglas}."></textarea></label>
+          <label>Background image URL <input name="background_url" type="url" placeholder="https://…"></label>
+          <div class="colors"><label>Accent <input name="accent_color" type="color"></label><label>Text <input name="text_color" type="color"></label></div>
+          <label class="switch"><input name="show_avatar" type="checkbox"><span>Show avatar</span></label>
+          <label class="switch"><input name="show_member_count" type="checkbox"><span>Show member count</span></label>
+          <div class="actions"><button type="submit">Save welcome card</button><button id="send-test" type="button">Send test card</button></div>
+        </form>
+        <section class="preview-wrap"><p class="eyebrow">LIVE PREVIEW</p><article id="card" class="card"><div id="avatar" class="avatar">M</div><div><h2 id="preview-title"></h2><p id="preview-message"></p><small id="member-count">You are member #1,024</small></div></article></section>
+      </div>
+    </main>
+    <script src="/assets/app.js?v=4"></script>
+  </body>
+</html>

@@ -14,6 +14,8 @@ class Settings:
     environment: str
     discord_token: str
     database_path: str
+    postgres_database_url: str | None
+    internal_api_token: str
     command_prefix: str
     weather_api_key: str | None
     giphy_api_key: str | None
@@ -39,6 +41,8 @@ class Settings:
             environment=environment,
             discord_token=token,
             database_path=database_path,
+            postgres_database_url=os.getenv("POSTGRES_DATABASE_URL"),
+            internal_api_token=os.getenv("INTERNAL_API_TOKEN", "miki-local-development-token"),
             command_prefix=os.getenv("COMMAND_PREFIX", "!"),
             weather_api_key=os.getenv("WEATHER_API_KEY"),
             giphy_api_key=os.getenv("GIPHY_API_KEY"),

@@ -15,6 +15,7 @@ class Events(commands.Cog):
         self.guild_settings = bot.app.services.guild_settings
         self.leaderboard_service = bot.app.services.leaderboard
         self.triggers = bot.app.services.triggers
+        self.welcome_cards = bot.app.services.welcome_cards
         self.fortunes = [
             "La vida es como un café, su valor no se establece por lo caliente que está, sino por cuánto tiempo permanece en tu taza. (´▽`)",
             "No busques a alguien que resuelva tus problemas; busca a alguien que nunca te deje enfrentarlos solo. (ง'̀-'́)ง",
@@ -138,6 +139,17 @@ class Events(commands.Cog):
                 )
                 await channel.send(embed=embed)
                 break
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member: discord.Member):
+        if member.bot:
+            return
+        try:
+            sent = await self.welcome_cards.send(member)
+            if sent:
+                logging.info("Sent welcome card for %s in %s", member, member.guild.name)
+        except Exception:
+            logging.exception("Could not send welcome card for %s", member)
 
     @commands.Cog.listener()
     async def on_message(self, message):

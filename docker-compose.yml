@@ -1,4 +1,29 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-miki}
+      POSTGRES_USER: ${POSTGRES_USER:-miki}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-miki_local_only}
+    volumes:
+      - miki-postgres:/var/lib/postgresql/data
+
+  miki-dashboard:
+    build: .
+    restart: unless-stopped
+    command: ["python", "-m", "dashboard.server"]
+    environment:
+      PYTHONPATH: /app/src
+      POSTGRES_DATABASE_URL: postgresql://${POSTGRES_USER:-miki}:${POSTGRES_PASSWORD:-miki_local_only}@postgres:5432/${POSTGRES_DB:-miki}
+      DASHBOARD_PORT: "8080"
+      BOT_INTERNAL_URL: http://miki-bot:8090
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-miki-local-development-token}
+    ports:
+      - "127.0.0.1:${DASHBOARD_HOST_PORT:-8081}:8080"
+    depends_on:
+      - postgres
+
   miki-bot:
     build: .
     container_name: miki_bot
@@ -9,8 +34,12 @@ services:
       MIKI_ENV: ${MIKI_ENV:-production}
       DATABASE_PATH: ${DATABASE_PATH:-/app/data/miki.db}
       PYTHONUNBUFFERED: "1"
+      POSTGRES_DATABASE_URL: postgresql://${POSTGRES_USER:-miki}:${POSTGRES_PASSWORD:-miki_local_only}@postgres:5432/${POSTGRES_DB:-miki}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-miki-local-development-token}
+    depends_on:
+      - postgres
     volumes:
-      - miki-data:/app/data
+      - ./data:/app/data
 
 volumes:
-  miki-data:
+  miki-postgres:

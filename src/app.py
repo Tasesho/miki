@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from config import Settings
+from dashboard.repository import PostgresWelcomeCardRepository
 from database.connection import Database
 from database.migrator import MigrationRunner
 from repositories.guild_repository import GuildRepository
@@ -16,6 +17,7 @@ from services.guild_settings import GuildSettingsService
 from services.leaderboard_service import LeaderboardService
 from services.profile_service import ProfileService
 from services.trigger_service import TriggerService
+from services.welcome_card_service import WelcomeCardService
 from setup.base import SetupManager
 from setup.service import SetupStateService
 from setup.ui import ChannelSetupView
@@ -41,6 +43,7 @@ class Services:
     triggers: TriggerService
     weather: WeatherClient
     gifs: GifClient
+    welcome_cards: WelcomeCardService
 
 
 class Application:
@@ -48,6 +51,11 @@ class Application:
         self.settings = settings
         self.database = Database(settings.database_path)
         self.migrations = MigrationRunner(self.database)
+        self.welcome_cards_repository = (
+            PostgresWelcomeCardRepository(settings.postgres_database_url)
+            if settings.postgres_database_url
+            else None
+        )
 
         self.repositories = Repositories(
             guilds=GuildRepository(self.database),
@@ -75,7 +83,15 @@ class Application:
             triggers=TriggerService(self.repositories.guilds),
             weather=WeatherClient(settings.weather_api_key),
             gifs=GifClient(settings.giphy_api_key),
+            welcome_cards=WelcomeCardService(self.welcome_cards_repository),
         )
 
     async def startup(self) -> None:
         await self.migrations.run()
+        if self.welcome_cards_repository is not None:
+            await self.welcome_cards_repository.connect()
+            await self.welcome_cards_repository.migrate()
+
+    async def shutdown(self) -> None:
+        if self.welcome_cards_repository is not None:
+            await self.welcome_cards_repository.close()
