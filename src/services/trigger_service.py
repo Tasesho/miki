@@ -13,7 +13,7 @@ DEFAULT_TRIGGERS = {
     "miedo": "Tranqui, yo te protejo  (ง'̀-'́)ง",
     "odio": "No digas eso, el odio es malo  (；￣Д￣)",
     "te amo": "Yo... yo tambien?  (*/ω＼*)",
-    "ayuda": "Si necesitas algo, usa !ayuda  ( °∀°)o",
+    "ayuda": "Si necesitas algo, usa /ayuda  ( °∀°)o",
     "pancito": "Invita un poco!  (っ˘ڡ˘ς)",
     "cafe": "Un cafecito para seguir programando  ( ￣▽￣)旦",
     "uwu": "nwn  (✿◡‿◡)",
@@ -24,6 +24,7 @@ DEFAULT_TRIGGERS = {
     "basado": "Factores.  (⌐■_■)",
     "miau": "Nyaa~  (＾◡＾)",
     "clima": "Usa !clima si quieres saber de verdad  ( ﾟヮﾟ)",
+    "!": "He migrado a mensajes de tipo slash (/) usa /ayuda para recibir la lista de comandos.  ( ﾟヮﾟ)",
 }
 
 
