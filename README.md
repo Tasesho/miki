@@ -50,6 +50,41 @@ docker compose down
 
 Docker stores runtime data in the `miki-data` volume at `/app/data/miki.db`.
 
+## Welcome-card dashboard (foundation)
+
+The dashboard is a local-only web service backed by PostgreSQL. It currently has no
+Discord authentication, so do not expose it to the internet. Start it with:
+
+```bash
+docker compose up -d postgres miki-dashboard
+```
+
+Open `http://127.0.0.1:8081`, enter a Discord server ID, then edit and save its
+welcome-card settings. The dashboard applies the PostgreSQL migrations automatically.
+For delivery to work, enable **Server Members Intent** for Miki in the Discord
+Developer Portal, then rebuild the bot after saving a card:
+
+```bash
+docker compose up -d --build miki-bot
+```
+
+Miki must have **View Channel**, **Send Messages**, and **Attach Files** in the
+configured welcome channel. Available template variables are `{user}` and `{server}`.
+The dashboard's **Send test card** button sends through Miki itself and reports the
+request/result in `docker compose logs -f miki-bot`. Set a long, matching
+`INTERNAL_API_TOKEN` in `.env` before exposing this stack beyond local development.
+You can confirm a saved card directly in the database:
+
+```bash
+docker compose exec postgres psql -U miki -d miki -c "SELECT guild_id, enabled, channel_id, title, updated_at FROM guild_welcome_cards;"
+```
+
+Run the real PostgreSQL persistence test against the Compose database with:
+
+```bash
+TEST_POSTGRES_DATABASE_URL=postgresql://miki:replace_with_a_long_secret@127.0.0.1:5432/miki pytest tests/test_welcome_cards_postgres.py
+```
+
 ## Quality Checks
 
 ```bash
