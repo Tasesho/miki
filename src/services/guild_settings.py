@@ -9,6 +9,7 @@ class GuildSettingsService:
         "fortune_hour": "12",
         "xp_per_message": "10",
         "xp_cooldown_seconds": "60",
+        "social_link_xp": "1",
     }
 
     def __init__(self, db):

@@ -13,6 +13,10 @@ Miki uses one codebase for development, staging, and production. Runtime behavio
 - `src/database/`: SQLite connection and migration runner.
 - `src/setup/`: future interactive setup flow primitives. No setup command is registered yet.
 
+The SQLite connection exposes the project's async database interface through a
+small `sqlite3` facade. This keeps repository APIs asynchronous while avoiding the
+Python 3.14 `aiosqlite` worker/future issue observed in the development runtime.
+
 ## Configuration
 
 Required for runtime:
@@ -49,8 +53,26 @@ The schema contains foundations for:
 - `guild_modules`: future per-guild module toggles
 - `guild_setup_state`: future interactive setup state
 - `guild_members`, `guild_profiles`, `guild_triggers`: existing guild-scoped bot data
+- `social_links`, `social_link_interactions`: directed Social Link progress and action history
 
 No new user-facing setup or module-toggle feature is exposed yet.
+
+## Social Links
+
+Social Links are implemented as a separate subsystem over the shared SQLite
+database. Relationships are directed and guild-scoped:
+
+```text
+guild_id + source_user_id + target_user_id
+```
+
+The `social_links` table stores current XP and rank. The
+`social_link_interactions` table records message-based rewards and makes repeated
+reactions, replies, and mentions idempotent. The public commands live in the
+`SocialLinks` Cog; configuration is exposed through the admin `config` group.
+
+Detailed rules and user-facing commands are documented in
+[Social Links](SOCIAL_LINKS.md).
 
 ## Dashboard Readiness
 

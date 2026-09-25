@@ -24,6 +24,9 @@ class Services(commands.Cog):
         description="Asistente interactivo de configuración (Solo Admins)",
         default_permissions=discord.Permissions(manage_guild=True),
     )
+    info_group = app_commands.Group(
+        name="info", description="Información sobre los sistemas de Miki"
+    )
 
     def __init__(self, bot):
         self.bot = bot
@@ -31,6 +34,7 @@ class Services(commands.Cog):
         self.guild_settings = bot.app.services.guild_settings
         self.leaderboard_service = bot.app.services.leaderboard
         self.profile_service = bot.app.services.profiles
+        self.social_link_service = bot.app.services.social_links
         self.weather_client = bot.app.services.weather
 
     @app_commands.command(name="clima", description="Obtén el clima actual de una ciudad")
@@ -239,6 +243,95 @@ class Services(commands.Cog):
             f"(´▽`) Guardé `{clave}` para este servidor.\n"
             "Los cambios se aplican solo aquí, no en otros servidores."
         )
+
+    @config_group.command(
+        name="social-link", description="Configura la XP ganada por interacción Social Link"
+    )
+    @app_commands.describe(experiencia="XP ganada por cada reacción, respuesta, mención o regalo")
+    async def config_social_link(
+        self,
+        interaction: discord.Interaction,
+        experiencia: app_commands.Range[int, 1, 1000],
+    ):
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
+            return
+
+        await self.guild_settings.set(interaction.guild.id, "social_link_xp", str(experiencia))
+        await interaction.response.send_message(
+            f"(´▽`) Cada interacción Social Link ahora otorgará **{experiencia} XP** "
+            "en este servidor.",
+            ephemeral=True,
+        )
+
+    @info_group.command(
+        name="social-link", description="Muestra las reglas actuales de Social Link"
+    )
+    async def info_social_link(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
+            return
+
+        xp_per_action = await self.guild_settings.get_int(interaction.guild.id, "social_link_xp")
+        if xp_per_action is None:
+            xp_per_action = 1
+
+        embed = discord.Embed(
+            title="(´▽`) Información: Social Link",
+            description=(
+                "Construye relaciones en este servidor mediante interacciones sociales (´▽`)"
+            ),
+            color=discord.Color.from_rgb(255, 105, 180),
+        )
+        embed.add_field(
+            name="(☆) Ganancia de XP",
+            value=(
+                f"Cada interacción válida otorga **{xp_per_action} XP**:\n"
+                "• Reacción a un mensaje\n"
+                "• Respuesta a un mensaje\n"
+                "• Mención directa\n"
+                "• Regalo de consumible"
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="(・ω・) Límites diarios",
+            value=(
+                f"• Máximo **{self.social_link_service.message_target_daily_limit}** "
+                "interacciones recompensadas por objetivo\n"
+                f"• Máximo **{self.social_link_service.message_global_daily_limit}** "
+                "interacciones recompensadas en total\n"
+                "• El mismo mensaje no puede recompensarse dos veces"
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="(｡•̀ᴗ-)✧ Progresión",
+            value=(
+                f"• Nivel inicial: **1** con **0 XP**\n"
+                f"• Primer nivel: **{self.social_link_service.base_level_xp} XP**\n"
+                "• Cada nivel duplica el costo del anterior\n"
+                "• Nivel máximo: **10**"
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="(ง'̀-'́)ง Reglas de relación",
+            value=(
+                "• Las relaciones son dirigidas: A → B no equivale a B → A\n"
+                "• El progreso es independiente por servidor\n"
+                "• No puedes generar afinidad contigo mismo\n"
+                "• Los bots, incluida Miki, no participan\n"
+                "• Las menciones deben ser directas, no texto escrito manualmente"
+            ),
+            inline=False,
+        )
+        embed.set_footer(text="Consulta una relación con /social-link view")
+        await interaction.response.send_message(embed=embed)
 
     @config_group.command(
         name="leaderboard", description="Configura el canal y hora (0-23) del Top 10 diario"

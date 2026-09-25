@@ -9,6 +9,7 @@ from database.migrator import MigrationRunner
 from repositories.guild_repository import GuildRepository
 from repositories.profile_repository import ProfileRepository
 from repositories.setup_state_repository import SetupStateRepository
+from repositories.social_link_repository import SocialLinkRepository
 from repositories.user_repository import UserRepository
 from services.activity_service import ActivityService
 from services.external_clients import GifClient, WeatherClient
@@ -16,6 +17,7 @@ from services.guild_module_service import GuildModuleService
 from services.guild_settings import GuildSettingsService
 from services.leaderboard_service import LeaderboardService
 from services.profile_service import ProfileService
+from services.social_link_service import SocialLinkService
 from services.trigger_service import TriggerService
 from services.welcome_card_service import WelcomeCardService
 from setup.base import SetupManager
@@ -28,6 +30,7 @@ class Repositories:
     guilds: GuildRepository
     profiles: ProfileRepository
     setup_state: SetupStateRepository
+    social_links: SocialLinkRepository
     users: UserRepository
 
 
@@ -40,6 +43,7 @@ class Services:
     profiles: ProfileService
     setup_state: SetupStateService
     setup_manager: SetupManager
+    social_links: SocialLinkService
     triggers: TriggerService
     weather: WeatherClient
     gifs: GifClient
@@ -61,6 +65,11 @@ class Application:
             guilds=GuildRepository(self.database),
             profiles=ProfileRepository(self.database),
             setup_state=SetupStateRepository(self.database),
+            social_links=SocialLinkRepository(
+                self.database,
+                base_level_xp=settings.social_link_base_xp,
+                reaction_xp=settings.social_link_reaction_xp,
+            ),
             users=UserRepository(self.database),
         )
 
@@ -80,6 +89,11 @@ class Application:
             profiles=ProfileService(self.repositories.users, self.repositories.profiles),
             setup_state=SetupStateService(self.repositories.setup_state),
             setup_manager=setup_manager,
+            social_links=SocialLinkService(
+                self.repositories.social_links,
+                guild_settings,
+                base_level_xp=settings.social_link_base_xp,
+            ),
             triggers=TriggerService(self.repositories.guilds),
             weather=WeatherClient(settings.weather_api_key),
             gifs=GifClient(settings.giphy_api_key),

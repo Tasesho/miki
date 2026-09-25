@@ -2,6 +2,22 @@
 
 This document records all versions of **BOT_MIKI** and its changes.
 
+## [2.3.0] - Social Links Update
+- **Social Links**: Added directed, guild-scoped relationships between members.
+- **Progression**: Added levels 1–10 with cumulative XP thresholds that double per level.
+- **Interactions**: Reactions, replies, direct mentions, and consumable gifts can award XP.
+- **Protection**: Added self-relation prevention, bot exclusion, idempotent message rewards,
+  and daily per-target and global limits.
+- **Commands**: Added `/social-link view`, `/social-link list`, `/info social-link`, and
+  admin configuration through `/config social-link`.
+- **UX**: Added pink Social Link information embeds and level-up notifications using
+  Miki's kaomoji style.
+- **Database**: Added dedicated Social Link tables, interaction history, and migrations.
+- **Welcome Cards**: Included the Welcome Card dashboard foundation and setup changes
+  introduced on `main` as part of the 2.3 release history.
+- **Compatibility**: Replaced the incompatible runtime SQLite adapter with an async-facing
+  `sqlite3` adapter for the current Python runtime.
+
 ## [2.2.0] - Interactive Setup & UX Polish
 - **Feature**: Implemented `/setup start` interactive onboarding menu using native Discord UI dropdowns for quick channel configuration.
 - **Feature**: Added an automatic welcome message upon joining a new guild, prompting administrators to run the setup command.
