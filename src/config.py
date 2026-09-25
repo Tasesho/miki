@@ -20,6 +20,8 @@ class Settings:
     weather_api_key: str | None
     giphy_api_key: str | None
     log_level: str
+    social_link_base_xp: int
+    social_link_reaction_xp: int
 
     @classmethod
     def from_env(cls, *, require_token: bool = False) -> Settings:
@@ -37,6 +39,12 @@ class Settings:
         database_path = os.getenv("DATABASE_PATH", "data/miki.db")
         Path(database_path).parent.mkdir(parents=True, exist_ok=True)
 
+        default_social_link_base_xp = "100"
+        social_link_base_xp = int(os.getenv("SOCIAL_LINK_BASE_XP", default_social_link_base_xp))
+        social_link_reaction_xp = int(os.getenv("SOCIAL_LINK_REACTION_XP", "1"))
+        if social_link_base_xp <= 0 or social_link_reaction_xp <= 0:
+            raise ValueError("Social Link XP settings must be positive integers.")
+
         return cls(
             environment=environment,
             discord_token=token,
@@ -47,6 +55,8 @@ class Settings:
             weather_api_key=os.getenv("WEATHER_API_KEY"),
             giphy_api_key=os.getenv("GIPHY_API_KEY"),
             log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
+            social_link_base_xp=social_link_base_xp,
+            social_link_reaction_xp=social_link_reaction_xp,
         )
 
 
