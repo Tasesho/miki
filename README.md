@@ -24,6 +24,8 @@ DISCORD_TOKEN=your_discord_bot_token
 DATABASE_PATH=data/miki-dev.db
 COMMAND_PREFIX=!
 LOG_LEVEL=INFO
+SOCIAL_LINK_BASE_XP=100
+SOCIAL_LINK_REACTION_XP=1
 WEATHER_API_KEY=
 GIPHY_API_KEY=
 ```
@@ -110,8 +112,12 @@ src/
 Further documentation:
 
 - [Architecture](docs/ARCHITECTURE.md)
+- [Social Links](docs/SOCIAL_LINKS.md)
 - [Development Workflow](docs/WORKFLOW.md)
 
 ## Current Commands
 
-Miki currently keeps the existing prefix commands, including profile, weather, GIF search, leaderboard, configuration, moderation cleanup, word history, and utility commands. This refactor does not add new user-facing features.
+Miki currently provides slash commands for profile, weather, GIF search, leaderboard,
+configuration, Social Links, information, moderation cleanup, word history, and
+utility features. See [Social Links](docs/SOCIAL_LINKS.md) for the relationship rules
+and commands.
