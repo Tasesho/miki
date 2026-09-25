@@ -281,14 +281,14 @@ class Services(commands.Cog):
             xp_per_action = 1
 
         embed = discord.Embed(
-            title="💗 Información: Social Link",
+            title="(´▽`) Información: Social Link",
             description=(
                 "Construye relaciones en este servidor mediante interacciones sociales (´▽`)"
             ),
             color=discord.Color.from_rgb(255, 105, 180),
         )
         embed.add_field(
-            name="✨ Ganancia de XP",
+            name="(☆) Ganancia de XP",
             value=(
                 f"Cada interacción válida otorga **{xp_per_action} XP**:\n"
                 "• Reacción a un mensaje\n"
@@ -299,7 +299,7 @@ class Services(commands.Cog):
             inline=False,
         )
         embed.add_field(
-            name="⏱️ Límites diarios",
+            name="(・ω・) Límites diarios",
             value=(
                 f"• Máximo **{self.social_link_service.message_target_daily_limit}** "
                 "interacciones recompensadas por objetivo\n"
@@ -310,7 +310,7 @@ class Services(commands.Cog):
             inline=False,
         )
         embed.add_field(
-            name="📈 Progresión",
+            name="(｡•̀ᴗ-)✧ Progresión",
             value=(
                 f"• Nivel inicial: **1** con **0 XP**\n"
                 f"• Primer nivel: **{self.social_link_service.base_level_xp} XP**\n"
@@ -320,7 +320,7 @@ class Services(commands.Cog):
             inline=False,
         )
         embed.add_field(
-            name="🤝 Reglas de relación",
+            name="(ง'̀-'́)ง Reglas de relación",
             value=(
                 "• Las relaciones son dirigidas: A → B no equivale a B → A\n"
                 "• El progreso es independiente por servidor\n"
