@@ -2,6 +2,8 @@
 
 Miki is a Python Discord bot built with `discord.py`, SQLite, and Docker. The project uses modular Cogs, a shared service layer, repositories for data access, and environment-based configuration for development, staging, and production.
 
+Current release: **2.3.0 — Social Links Update**
+
 ## Requirements
 
 - Python 3.11+
@@ -121,3 +123,13 @@ Miki currently provides slash commands for profile, weather, GIF search, leaderb
 configuration, Social Links, information, moderation cleanup, word history, and
 utility features. See [Social Links](docs/SOCIAL_LINKS.md) for the relationship rules
 and commands.
+
+Social Link commands:
+
+```text
+/social-link view
+/social-link view user:@member
+/social-link list
+/info social-link
+/config social-link experiencia:10   # Admin only
+```
