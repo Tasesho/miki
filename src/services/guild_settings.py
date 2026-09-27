@@ -10,6 +10,12 @@ class GuildSettingsService:
         "xp_per_message": "10",
         "xp_cooldown_seconds": "60",
         "social_link_xp": "1",
+        "coffee_event_min_minutes": None,
+        "coffee_event_max_minutes": None,
+        "coffee_event_duration_seconds": None,
+        "coffee_event_min_wait_hours": None,
+        "coffee_event_chance_denominator": None,
+        "coffee_gift_xp": None,
     }
 
     def __init__(self, db):

@@ -2,6 +2,18 @@
 
 This document records all versions of **BOT_MIKI** and its changes.
 
+## [Coffee Update] - 2026-09-27
+- **Coffee Suelto**: Added automatic community coffee events with a one-hour minimum cooldown and configurable `1/N` probability rolls once per minute.
+- **Reactions**: Coffee messages now include Miki's `☕` reaction automatically; only the first user reaction with that emoji can win.
+- **Expiration**: Active coffee messages are deleted automatically after their configured duration.
+- **Concurrency**: Added per-guild locking so simultaneous reactions cannot produce duplicate winners.
+- **Inventory**: Added guild- and user-scoped consumable inventories with SQLite migration `004_inventory_and_coffee.sql`.
+- **Commands**: Added `/cafe inventario`, `/cafe usar`, and `/cafe regalar`.
+- **Rewards**: Consuming an item grants 50 global XP; gifting another user grants +1 Social Link and 100 global XP to the giver; gifting Miki increases Miki affinity.
+- **Configuration**: Added `/setup cafe` for per-guild cooldown, probability, event duration, and gift XP configuration.
+- **Persistence**: Added Miki affinity storage and inventory persistence across bot restarts.
+- **Bugfix**: Social Link ranks are now derived from current affinity XP, preventing stale persisted ranks from appearing to downgrade after configuration changes.
+
 ## [2.3.0] - Social Links Update
 - **Social Links**: Added directed, guild-scoped relationships between members.
 - **Progression**: Added levels 1–10 with cumulative XP thresholds that double per level.

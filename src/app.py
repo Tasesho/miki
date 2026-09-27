@@ -7,6 +7,7 @@ from dashboard.repository import PostgresWelcomeCardRepository
 from database.connection import Database
 from database.migrator import MigrationRunner
 from repositories.guild_repository import GuildRepository
+from repositories.inventory_repository import InventoryRepository
 from repositories.profile_repository import ProfileRepository
 from repositories.setup_state_repository import SetupStateRepository
 from repositories.social_link_repository import SocialLinkRepository
@@ -16,6 +17,7 @@ from services.external_clients import GifClient, WeatherClient
 from services.guild_module_service import GuildModuleService
 from services.guild_settings import GuildSettingsService
 from services.leaderboard_service import LeaderboardService
+from services.inventory_service import InventoryService
 from services.profile_service import ProfileService
 from services.social_link_service import SocialLinkService
 from services.trigger_service import TriggerService
@@ -28,6 +30,7 @@ from setup.ui import ChannelSetupView
 @dataclass
 class Repositories:
     guilds: GuildRepository
+    inventory: InventoryRepository
     profiles: ProfileRepository
     setup_state: SetupStateRepository
     social_links: SocialLinkRepository
@@ -40,6 +43,7 @@ class Services:
     guild_modules: GuildModuleService
     guild_settings: GuildSettingsService
     leaderboard: LeaderboardService
+    inventory: InventoryService
     profiles: ProfileService
     setup_state: SetupStateService
     setup_manager: SetupManager
@@ -63,6 +67,7 @@ class Application:
 
         self.repositories = Repositories(
             guilds=GuildRepository(self.database),
+            inventory=InventoryRepository(self.database),
             profiles=ProfileRepository(self.database),
             setup_state=SetupStateRepository(self.database),
             social_links=SocialLinkRepository(
@@ -74,6 +79,11 @@ class Application:
         )
 
         guild_settings = GuildSettingsService(self.repositories.guilds)
+        social_links = SocialLinkService(
+            self.repositories.social_links,
+            guild_settings,
+            base_level_xp=settings.social_link_base_xp,
+        )
 
         setup_manager = SetupManager()
         setup_manager.register_module(
@@ -86,20 +96,26 @@ class Application:
             guild_modules=GuildModuleService(self.repositories.guilds),
             guild_settings=guild_settings,
             leaderboard=LeaderboardService(self.repositories.users),
+            inventory=InventoryService(
+                self.repositories.inventory,
+                self.repositories.users,
+                social_links,
+                coffee_event_min_minutes=settings.coffee_event_min_minutes,
+                coffee_event_max_minutes=settings.coffee_event_max_minutes,
+                coffee_event_duration_seconds=settings.coffee_event_duration_seconds,
+                coffee_event_min_wait_hours=settings.coffee_event_min_wait_hours,
+                coffee_event_chance_denominator=settings.coffee_event_chance_denominator,
+                coffee_gift_xp=100,
+            ),
             profiles=ProfileService(self.repositories.users, self.repositories.profiles),
             setup_state=SetupStateService(self.repositories.setup_state),
             setup_manager=setup_manager,
-            social_links=SocialLinkService(
-                self.repositories.social_links,
-                guild_settings,
-                base_level_xp=settings.social_link_base_xp,
-            ),
+            social_links=social_links,
             triggers=TriggerService(self.repositories.guilds),
             weather=WeatherClient(settings.weather_api_key),
             gifs=GifClient(settings.giphy_api_key),
             welcome_cards=WelcomeCardService(self.welcome_cards_repository),
         )
-
     async def startup(self) -> None:
         await self.migrations.run()
         if self.welcome_cards_repository is not None:

@@ -258,7 +258,7 @@ class SocialLinkRepository:
             row = await cursor.fetchone()
 
         current_xp = row[0] if row else 0
-        current_rank = row[1] if row else 1
+        current_rank = self.rank_for_xp(current_xp, self.base_level_xp)
         next_xp = current_xp + affinity_xp
         next_rank = self.rank_for_xp(next_xp, self.base_level_xp)
         await db.execute(
@@ -291,14 +291,14 @@ class SocialLinkRepository:
             cost *= 2
         return rank
 
-    @staticmethod
-    def _link_from_row(row: tuple) -> dict:
+    def _link_from_row(self, row: tuple) -> dict:
+        affinity_xp = row[3]
         return {
             "guild_id": row[0],
             "user_id": row[1],
             "target_user_id": row[2],
-            "affinity_xp": row[3],
-            "affinity_rank": row[4],
+            "affinity_xp": affinity_xp,
+            "affinity_rank": self.rank_for_xp(affinity_xp, self.base_level_xp),
         }
 
     @staticmethod
