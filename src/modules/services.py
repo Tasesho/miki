@@ -7,6 +7,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from setup.cafe import CafeSetupView
 from setup.ui import SetupDropdown
 
 
@@ -399,6 +400,24 @@ class Services(commands.Cog):
             color=discord.Color.green(),
         )
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+    @setup_group.command(name="cafe", description="Configura los eventos Café Suelto")
+    async def setup_cafe(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando dentro de un servidor.", ephemeral=True
+            )
+            return
+        view = CafeSetupView(
+            interaction.guild.id,
+            interaction.user.id,
+            self.guild_settings,
+        )
+        await interaction.response.send_message(
+            "☕ Configuración de Café Suelto. Pulsa el botón para editar los valores:",
+            view=view,
+            ephemeral=True,
+        )
 
     async def _build_profile_embed(self, user, usuario):
         xp_actual = usuario["xp"]

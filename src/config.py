@@ -22,6 +22,11 @@ class Settings:
     log_level: str
     social_link_base_xp: int
     social_link_reaction_xp: int
+    coffee_event_min_minutes: float
+    coffee_event_max_minutes: float
+    coffee_event_duration_seconds: float
+    coffee_event_min_wait_hours: float
+    coffee_event_chance_denominator: int
 
     @classmethod
     def from_env(cls, *, require_token: bool = False) -> Settings:
@@ -45,6 +50,20 @@ class Settings:
         if social_link_base_xp <= 0 or social_link_reaction_xp <= 0:
             raise ValueError("Social Link XP settings must be positive integers.")
 
+        coffee_event_min_minutes = float(os.getenv("COFFEE_EVENT_MIN_MINUTES", "240"))
+        coffee_event_max_minutes = float(os.getenv("COFFEE_EVENT_MAX_MINUTES", "300"))
+        if coffee_event_min_minutes <= 0 or coffee_event_max_minutes < coffee_event_min_minutes:
+            raise ValueError("Coffee event interval settings are invalid.")
+        coffee_event_duration_seconds = float(os.getenv("COFFEE_EVENT_DURATION_SECONDS", "30"))
+        if coffee_event_duration_seconds <= 0:
+            raise ValueError("Coffee event duration must be positive.")
+        coffee_event_min_wait_hours = float(os.getenv("COFFEE_EVENT_MIN_WAIT_HOURS", "1"))
+        coffee_event_chance_denominator = int(
+            os.getenv("COFFEE_EVENT_CHANCE_DENOMINATOR", "5")
+        )
+        if coffee_event_min_wait_hours <= 0 or coffee_event_chance_denominator <= 0:
+            raise ValueError("Coffee event probability settings are invalid.")
+
         return cls(
             environment=environment,
             discord_token=token,
@@ -57,6 +76,11 @@ class Settings:
             log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
             social_link_base_xp=social_link_base_xp,
             social_link_reaction_xp=social_link_reaction_xp,
+            coffee_event_min_minutes=coffee_event_min_minutes,
+            coffee_event_max_minutes=coffee_event_max_minutes,
+            coffee_event_duration_seconds=coffee_event_duration_seconds,
+            coffee_event_min_wait_hours=coffee_event_min_wait_hours,
+            coffee_event_chance_denominator=coffee_event_chance_denominator,
         )
 
 

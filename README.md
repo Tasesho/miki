@@ -2,7 +2,7 @@
 
 Miki is a Python Discord bot built with `discord.py`, SQLite, and Docker. The project uses modular Cogs, a shared service layer, repositories for data access, and environment-based configuration for development, staging, and production.
 
-Current release: **2.3.0 — Social Links Update**
+Current release: **Coffee Update — Inventario y Café Suelto**
 
 ## Requirements
 
@@ -28,6 +28,9 @@ COMMAND_PREFIX=!
 LOG_LEVEL=INFO
 SOCIAL_LINK_BASE_XP=100
 SOCIAL_LINK_REACTION_XP=1
+COFFEE_EVENT_DURATION_SECONDS=30
+COFFEE_EVENT_MIN_WAIT_HOURS=1
+COFFEE_EVENT_CHANCE_DENOMINATOR=5
 WEATHER_API_KEY=
 GIPHY_API_KEY=
 ```
@@ -133,3 +136,64 @@ Social Link commands:
 /info social-link
 /config social-link experiencia:10   # Admin only
 ```
+
+## Coffee Update
+
+Miki incluye un sistema de consumibles y eventos comunitarios llamado **Café
+Suelto**. Los consumibles se guardan por servidor y usuario, por lo que no se
+mezclan entre servidores ni se pierden al reiniciar el bot.
+
+### Café Suelto
+
+El evento utiliza el canal general configurado mediante `/setup start`.
+
+1. Miki espera el cooldown mínimo configurado, una hora por defecto.
+2. Después realiza una sola tirada por minuto.
+3. Con el valor predeterminado, la probabilidad es `1/5` por minuto.
+4. Miki publica un mensaje con la reacción `☕` ya añadida.
+5. El primer usuario que reaccione con `☕` gana un consumible.
+6. El mensaje se elimina automáticamente al terminar su duración.
+
+La reacción de Miki no cuenta como participación y las reacciones con otros
+emojis se ignoran. Un lock por servidor evita que dos usuarios ganen el mismo
+evento.
+
+### Inventario y comandos
+
+```text
+/cafe inventario
+/cafe usar
+/cafe regalar usuario:@usuario
+```
+
+- `/cafe inventario` muestra los consumibles disponibles y la afinidad con Miki.
+- `/cafe usar` consume un objeto y otorga `50 XP` globales.
+- `/cafe regalar` entrega un objeto a otro usuario, otorga `+1` Social Link y
+  entrega `100 XP` al usuario que hace el regalo.
+- Regalarle un objeto a Miki aumenta la afinidad con Miki, pero no otorga XP global.
+- No se permiten regalos a uno mismo ni a otros bots.
+
+### Configuración desde Discord
+
+Los administradores pueden ejecutar:
+
+```text
+/setup cafe
+```
+
+El panel permite configurar por servidor:
+
+- Horas de espera mínima antes de volver a intentar un evento.
+- Duración del mensaje del evento en segundos.
+- Probabilidad `1/N` por minuto después del cooldown.
+- XP otorgada por regalar un consumible a otro usuario.
+
+Los valores iniciales del entorno son:
+
+```env
+COFFEE_EVENT_DURATION_SECONDS=30
+COFFEE_EVENT_MIN_WAIT_HOURS=1
+COFFEE_EVENT_CHANCE_DENOMINATOR=5
+```
+
+Para pruebas, el entorno local puede usar una duración menor, como `10` segundos.
