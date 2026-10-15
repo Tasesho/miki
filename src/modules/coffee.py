@@ -35,10 +35,14 @@ class Coffee(commands.Cog):
         for task in self.expiry_tasks:
             task.cancel()
 
-    @coffee_group.command(name="inventario", description="Muestra tus consumibles y afinidad con Miki")
+    @coffee_group.command(
+        name="inventario", description="Muestra tus consumibles y afinidad con Miki"
+    )
     async def inventory_command(self, interaction: discord.Interaction):
         if interaction.guild is None:
-            await interaction.response.send_message("(´；ω；`) Usa este comando en un servidor.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando en un servidor.", ephemeral=True
+            )
             return
         count = await self.inventory.inventory(interaction.guild.id, interaction.user.id)
         affinity = await self.inventory.miki_affinity(interaction.guild.id, interaction.user.id)
@@ -52,30 +56,42 @@ class Coffee(commands.Cog):
     @coffee_group.command(name="usar", description="Consume un objeto y gana 50 XP global")
     async def use_command(self, interaction: discord.Interaction):
         if interaction.guild is None:
-            await interaction.response.send_message("(´；ω；`) Usa este comando en un servidor.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando en un servidor.", ephemeral=True
+            )
             return
         result = await self.inventory.use_consumable(
             interaction.guild.id, interaction.user.id, interaction.user.name
         )
         if result is None:
-            await interaction.response.send_message("(´・ω・`) No tienes consumibles.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´・ω・`) No tienes consumibles.", ephemeral=True
+            )
             return
         message = f"(≧▽≦) Consumible usado. Ganaste **50 XP**.\nInventario restante: **{await self.inventory.inventory(interaction.guild.id, interaction.user.id)}**"
         if result["subio_nivel"]:
             message += f"\n¡Subiste al nivel **{result['nivel_actual']}**!"
         await interaction.response.send_message(message)
 
-    @coffee_group.command(name="regalar", description="Regala un consumible a otro usuario o a Miki")
+    @coffee_group.command(
+        name="regalar", description="Regala un consumible a otro usuario o a Miki"
+    )
     @app_commands.describe(usuario="Usuario destinatario; puedes elegir a Miki")
     async def gift_command(self, interaction: discord.Interaction, usuario: discord.Member):
         if interaction.guild is None:
-            await interaction.response.send_message("(´；ω；`) Usa este comando en un servidor.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´；ω；`) Usa este comando en un servidor.", ephemeral=True
+            )
             return
         if usuario.id == interaction.user.id:
-            await interaction.response.send_message("(´・ω・`) No puedes regalarte un consumible.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´・ω・`) No puedes regalarte un consumible.", ephemeral=True
+            )
             return
         if usuario.bot and (self.bot.user is None or usuario.id != self.bot.user.id):
-            await interaction.response.send_message("(´・ω・`) Solo puedes regalarle a otro usuario o a Miki.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´・ω・`) Solo puedes regalarle a otro usuario o a Miki.", ephemeral=True
+            )
             return
 
         result = await self.inventory.gift_consumable(
@@ -88,7 +104,9 @@ class Coffee(commands.Cog):
             target_is_miki=usuario.id == self.bot.user.id,
         )
         if result is None:
-            await interaction.response.send_message("(´・ω・`) No tienes consumibles.", ephemeral=True)
+            await interaction.response.send_message(
+                "(´・ω・`) No tienes consumibles.", ephemeral=True
+            )
             return
         if result.get("target") == "miki":
             text = f"(´▽`) Gracias por el regalo, {interaction.user.mention}. Mi afinidad contigo ahora es **{result['affinity_points']}**."
@@ -189,9 +207,7 @@ class Coffee(commands.Cog):
             if self.active_events.get(guild_id) == message_id:
                 self.active_events.pop(guild_id, None)
                 cooldown_hours, _, _, _ = await self._coffee_config(guild_id)
-                self.available_at[guild_id] = datetime.now(UTC) + timedelta(
-                    hours=cooldown_hours
-                )
+                self.available_at[guild_id] = datetime.now(UTC) + timedelta(hours=cooldown_hours)
 
         channel = guild.get_channel(channel_id)
         if channel is None or not hasattr(channel, "fetch_message"):
@@ -206,9 +222,7 @@ class Coffee(commands.Cog):
     async def _coffee_config(
         self, guild_id: int, only_xp: bool = False
     ) -> tuple[float, float, int, int] | int:
-        cooldown_hours = await self.guild_settings.get_int(
-            guild_id, "coffee_event_min_wait_hours"
-        )
+        cooldown_hours = await self.guild_settings.get_int(guild_id, "coffee_event_min_wait_hours")
         duration = await self.guild_settings.get_int(guild_id, "coffee_event_duration_seconds")
         chance_denominator = await self.guild_settings.get_int(
             guild_id, "coffee_event_chance_denominator"
@@ -217,13 +231,9 @@ class Coffee(commands.Cog):
         if only_xp:
             return gift_xp if gift_xp is not None else self.inventory.coffee_gift_xp
         return (
-            cooldown_hours
-            if cooldown_hours is not None
-            else self.min_wait_hours,
+            cooldown_hours if cooldown_hours is not None else self.min_wait_hours,
             duration if duration is not None else self.event_duration_seconds,
-            chance_denominator
-            if chance_denominator is not None
-            else self.chance_denominator,
+            chance_denominator if chance_denominator is not None else self.chance_denominator,
             gift_xp if gift_xp is not None else self.inventory.coffee_gift_xp,
         )
 

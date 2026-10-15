@@ -36,9 +36,7 @@ class InventoryService:
     async def award_consumable(self, guild_id: int, user_id: int) -> int:
         return await self.repository.add_consumable(guild_id, user_id)
 
-    async def use_consumable(
-        self, guild_id: int, user_id: int, username: str
-    ) -> dict | None:
+    async def use_consumable(self, guild_id: int, user_id: int, username: str) -> dict | None:
         async with self._lock_for(guild_id, user_id):
             if not await self.repository.remove_consumable(guild_id, user_id):
                 return None

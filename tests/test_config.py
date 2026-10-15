@@ -17,6 +17,7 @@ def test_settings_supports_environment_overrides(monkeypatch, tmp_path):
 
 
 def test_settings_import_safe_without_token(monkeypatch, tmp_path):
+    monkeypatch.setattr("config.load_dotenv", lambda: None)
     monkeypatch.delenv("DISCORD_TOKEN", raising=False)
     monkeypatch.delenv("TOKEN", raising=False)
     monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "miki.db"))

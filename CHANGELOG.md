@@ -2,6 +2,19 @@
 
 This document records all versions of **BOT_MIKI** and its changes.
 
+## [Worlds Schedule (temporary)] - 2026-10-15
+
+> [!IMPORTANT]
+> This release is scoped to League of Legends Worlds while the tournament runs.
+> It will be redesigned as a configurable schedule and announcement module for
+> any sports or esports competition after Worlds.
+
+- **Schedule command:** Added `/lol-schedule` with today's Worlds matches in a Miki-style embed, Santiago start times, and kaomojis.
+- **Automatic announcements:** Added one post per server per match day between 12:00 and 13:59 `America/Santiago`; days without matches are skipped.
+- **Server setup:** Added admin-only `/lol-schedule-setup` to select the announcement channel and enable or disable automatic posts. Announcements start disabled.
+- **Data source:** Reads the LoL Esports website schedule feed, with an optional `LOL_ESPORTS_API_KEY` override. This feed is undocumented and may change.
+- **Development and checks:** Added a Python venv setup, schedule and delivery tests, timezone data for Windows, and repository-wide Ruff formatting fixes so CI quality checks pass.
+
 ## [Coffee Update] - 2026-09-27
 - **Coffee Suelto**: Added automatic community coffee events with a one-hour minimum cooldown and configurable `1/N` probability rolls once per minute.
 - **Reactions**: Coffee messages now include Miki's `☕` reaction automatically; only the first user reaction with that emoji can win.
