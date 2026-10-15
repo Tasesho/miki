@@ -2,6 +2,12 @@
 
 This document records all versions of **BOT_MIKI** and its changes.
 
+## [Café de Miki rename] - 2026-10-15
+
+- Renamed the event text from "Café Suelto" to "Café de Miki" and the command groups to `/coffe` and `/setup coffe`.
+- Removed "Pancito" and "Daigo" from the inventory display; it now shows a single Café de Miki count.
+- Kept rewards, timing, stored inventory, and existing environment and server setting keys unchanged.
+
 ## [Worlds Schedule (temporary)] - 2026-10-15
 
 > [!IMPORTANT]

@@ -5,7 +5,7 @@ import discord
 from setup.base import BaseSetupView
 
 
-class CafeSettingsModal(discord.ui.Modal, title="Configurar Café Suelto"):
+class CoffeSettingsModal(discord.ui.Modal, title="Configurar Café de Miki"):
     cooldown = discord.ui.TextInput(
         label="Espera mínima inicial (horas)",
         placeholder="1",
@@ -76,7 +76,7 @@ class CafeSettingsModal(discord.ui.Modal, title="Configurar Café Suelto"):
             )
             await self.guild_settings.set(self.guild_id, "coffee_gift_xp", str(gift_xp))
             await interaction.response.send_message(
-                f"(｡•̀ᴗ-)✧ Café configurado: espera **{cooldown} h**, "
+                f"(｡•̀ᴗ-)✧ Café de Miki configurado: espera **{cooldown} h**, "
                 f"probabilidad **1/{chance}** por minuto, duración **{duration} s**, "
                 f"recompensa **{gift_xp} XP**.",
                 ephemeral=True,
@@ -86,7 +86,7 @@ class CafeSettingsModal(discord.ui.Modal, title="Configurar Café Suelto"):
         await interaction.response.send_message(message, ephemeral=True)
 
 
-class CafeSetupView(BaseSetupView):
+class CoffeSetupView(BaseSetupView):
     def __init__(self, guild_id: int, user_id: int, guild_settings):
         super().__init__(guild_id, user_id)
         self.guild_settings = guild_settings
@@ -106,7 +106,7 @@ class CafeSetupView(BaseSetupView):
             await self.guild_settings.get_int(self.guild_id, "coffee_event_chance_denominator") or 5
         )
         await interaction.response.send_modal(
-            CafeSettingsModal(
+            CoffeSettingsModal(
                 self.guild_settings, self.guild_id, (cooldown, duration, gift_xp, chance)
             )
         )
@@ -116,5 +116,5 @@ class CafeSetupView(BaseSetupView):
         for item in self.children:
             item.disabled = True
         await interaction.response.edit_message(
-            content="(´▽`) Configuración de Café Suelto guardada.", view=self
+            content="(´▽`) Configuración de Café de Miki guardada.", view=self
         )

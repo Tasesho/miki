@@ -4,30 +4,29 @@ import asyncio
 
 
 class InventoryService:
-    ITEM_NAMES = ("Café", "Pancito", "Daigo")
-    COFFEE_XP_REWARD = 50
+    COFFE_XP_REWARD = 50
 
     def __init__(
         self,
         repository,
         user_repository,
         social_link_service,
-        coffee_event_min_minutes: float = 240,
-        coffee_event_max_minutes: float = 300,
-        coffee_event_duration_seconds: float = 30,
-        coffee_event_min_wait_hours: float = 1,
-        coffee_event_chance_denominator: int = 5,
-        coffee_gift_xp: int = 100,
+        coffe_event_min_minutes: float = 240,
+        coffe_event_max_minutes: float = 300,
+        coffe_event_duration_seconds: float = 30,
+        coffe_event_min_wait_hours: float = 1,
+        coffe_event_chance_denominator: int = 5,
+        coffe_gift_xp: int = 100,
     ):
         self.repository = repository
         self.user_repository = user_repository
         self.social_link_service = social_link_service
-        self.coffee_event_min_minutes = coffee_event_min_minutes
-        self.coffee_event_max_minutes = coffee_event_max_minutes
-        self.coffee_event_duration_seconds = coffee_event_duration_seconds
-        self.coffee_event_min_wait_hours = coffee_event_min_wait_hours
-        self.coffee_event_chance_denominator = coffee_event_chance_denominator
-        self.coffee_gift_xp = coffee_gift_xp
+        self.coffe_event_min_minutes = coffe_event_min_minutes
+        self.coffe_event_max_minutes = coffe_event_max_minutes
+        self.coffe_event_duration_seconds = coffe_event_duration_seconds
+        self.coffe_event_min_wait_hours = coffe_event_min_wait_hours
+        self.coffe_event_chance_denominator = coffe_event_chance_denominator
+        self.coffe_gift_xp = coffe_gift_xp
         self._locks: dict[tuple[int, int], asyncio.Lock] = {}
 
     async def inventory(self, guild_id: int, user_id: int) -> int:
@@ -42,7 +41,7 @@ class InventoryService:
                 return None
             try:
                 xp_result = await self.user_repository.add_xp(
-                    guild_id, user_id, username, self.COFFEE_XP_REWARD
+                    guild_id, user_id, username, self.COFFE_XP_REWARD
                 )
             except Exception:
                 await self.repository.add_consumable(guild_id, user_id)
@@ -75,7 +74,7 @@ class InventoryService:
                 if link is None:
                     await self.repository.add_consumable(guild_id, user_id)
                     return None
-                reward_xp = self.coffee_gift_xp if gift_xp is None else gift_xp
+                reward_xp = self.coffe_gift_xp if gift_xp is None else gift_xp
                 if reward_xp > 0:
                     link["gift_xp_result"] = await self.user_repository.add_xp(
                         guild_id, user_id, username, reward_xp

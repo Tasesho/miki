@@ -10,19 +10,19 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 
-class Coffee(commands.Cog):
-    coffee_group = app_commands.Group(name="cafe", description="Inventario y eventos de Miki")
+class Coffe(commands.Cog):
+    coffe_group = app_commands.Group(name="coffe", description="Café de Miki")
     EVENT_EMOJI = "☕"
 
     def __init__(self, bot):
         self.bot = bot
         self.inventory = bot.app.services.inventory
         self.guild_settings = bot.app.services.guild_settings
-        self.event_min_minutes = self.inventory.coffee_event_min_minutes
-        self.event_max_minutes = self.inventory.coffee_event_max_minutes
-        self.event_duration_seconds = self.inventory.coffee_event_duration_seconds
-        self.min_wait_hours = self.inventory.coffee_event_min_wait_hours
-        self.chance_denominator = self.inventory.coffee_event_chance_denominator
+        self.event_min_minutes = self.inventory.coffe_event_min_minutes
+        self.event_max_minutes = self.inventory.coffe_event_max_minutes
+        self.event_duration_seconds = self.inventory.coffe_event_duration_seconds
+        self.min_wait_hours = self.inventory.coffe_event_min_wait_hours
+        self.chance_denominator = self.inventory.coffe_event_chance_denominator
         self.active_events: dict[int, int] = {}
         self.available_at: dict[int, datetime] = {}
         self.last_roll_minute: dict[int, str] = {}
@@ -35,8 +35,8 @@ class Coffee(commands.Cog):
         for task in self.expiry_tasks:
             task.cancel()
 
-    @coffee_group.command(
-        name="inventario", description="Muestra tus consumibles y afinidad con Miki"
+    @coffe_group.command(
+        name="inventario", description="Muestra tus Cafés de Miki y afinidad con Miki"
     )
     async def inventory_command(self, interaction: discord.Interaction):
         if interaction.guild is None:
@@ -46,14 +46,13 @@ class Coffee(commands.Cog):
             return
         count = await self.inventory.inventory(interaction.guild.id, interaction.user.id)
         affinity = await self.inventory.miki_affinity(interaction.guild.id, interaction.user.id)
-        item = random.choice(self.inventory.ITEM_NAMES) if count else "Sin consumibles"
         await interaction.response.send_message(
             f"(｡•̀ᴗ-)✧ **Inventario de {interaction.user.display_name}**\n"
-            f"Consumibles: **{count}** ({item})\n"
+            f"Cafés de Miki: **{count}**\n"
             f"Afinidad con Miki: **{affinity}**"
         )
 
-    @coffee_group.command(name="usar", description="Consume un objeto y gana 50 XP global")
+    @coffe_group.command(name="usar", description="Toma un Café de Miki y gana 50 XP global")
     async def use_command(self, interaction: discord.Interaction):
         if interaction.guild is None:
             await interaction.response.send_message(
@@ -65,16 +64,16 @@ class Coffee(commands.Cog):
         )
         if result is None:
             await interaction.response.send_message(
-                "(´・ω・`) No tienes consumibles.", ephemeral=True
+                "(´・ω・`) No tienes Cafés de Miki.", ephemeral=True
             )
             return
-        message = f"(≧▽≦) Consumible usado. Ganaste **50 XP**.\nInventario restante: **{await self.inventory.inventory(interaction.guild.id, interaction.user.id)}**"
+        message = f"(≧▽≦) ¡Tomaste un Café de Miki! Ganaste **50 XP**.\nCafés restantes: **{await self.inventory.inventory(interaction.guild.id, interaction.user.id)}**"
         if result["subio_nivel"]:
             message += f"\n¡Subiste al nivel **{result['nivel_actual']}**!"
         await interaction.response.send_message(message)
 
-    @coffee_group.command(
-        name="regalar", description="Regala un consumible a otro usuario o a Miki"
+    @coffe_group.command(
+        name="regalar", description="Regala un Café de Miki a otra persona o a Miki"
     )
     @app_commands.describe(usuario="Usuario destinatario; puedes elegir a Miki")
     async def gift_command(self, interaction: discord.Interaction, usuario: discord.Member):
@@ -100,19 +99,19 @@ class Coffee(commands.Cog):
             usuario.id,
             f"gift:{interaction.id}",
             username=interaction.user.name,
-            gift_xp=await self._coffee_config(interaction.guild.id, only_xp=True),
+            gift_xp=await self._coffe_config(interaction.guild.id, only_xp=True),
             target_is_miki=usuario.id == self.bot.user.id,
         )
         if result is None:
             await interaction.response.send_message(
-                "(´・ω・`) No tienes consumibles.", ephemeral=True
+                "(´・ω・`) No tienes Cafés de Miki.", ephemeral=True
             )
             return
         if result.get("target") == "miki":
             text = f"(´▽`) Gracias por el regalo, {interaction.user.mention}. Mi afinidad contigo ahora es **{result['affinity_points']}**."
         else:
             text = (
-                f"(｡•̀ᴗ-)✧ {interaction.user.mention} regaló un consumible a "
+                f"(｡•̀ᴗ-)✧ {interaction.user.mention} regaló un Café de Miki a "
                 f"{usuario.mention}. ¡Afinidad +1 y XP +100!"
             )
             if result.get("gift_xp_result", {}).get("subio_nivel"):
@@ -125,7 +124,7 @@ class Coffee(commands.Cog):
         for guild in self.bot.guilds:
             if guild.id in self.active_events:
                 continue
-            cooldown_hours, event_duration, chance_denominator, _ = await self._coffee_config(
+            cooldown_hours, event_duration, chance_denominator, _ = await self._coffe_config(
                 guild.id
             )
             available_at = self.available_at.setdefault(
@@ -149,8 +148,8 @@ class Coffee(commands.Cog):
                 continue
             try:
                 message = await channel.send(
-                    f"{self.EVENT_EMOJI} **¡Café Suelto!** {self.EVENT_EMOJI}\n"
-                    f"Reacciona con {self.EVENT_EMOJI}; el primero gana un consumible. "
+                    f"{self.EVENT_EMOJI} **¡Café de Miki!** {self.EVENT_EMOJI}\n"
+                    f"Reacciona con {self.EVENT_EMOJI}; el primero gana un Café de Miki. "
                     f"¡Tienes {event_duration:g} segundos! (ง'̀-'́)ง"
                 )
                 await message.add_reaction(self.EVENT_EMOJI)
@@ -161,7 +160,7 @@ class Coffee(commands.Cog):
                 self.expiry_tasks.add(task)
                 task.add_done_callback(self.expiry_tasks.discard)
             except (discord.Forbidden, discord.HTTPException):
-                logging.exception("Could not publish coffee event in guild %s", guild.id)
+                logging.exception("Could not publish coffe event in guild %s", guild.id)
 
     @suelto_loop.before_loop
     async def before_suelto_loop(self):
@@ -182,7 +181,7 @@ class Coffee(commands.Cog):
             if self.active_events.get(guild.id) != payload.message_id:
                 return
             self.active_events.pop(guild.id, None)
-            cooldown_hours, _, _, _ = await self._coffee_config(guild.id)
+            cooldown_hours, _, _, _ = await self._coffe_config(guild.id)
             self.available_at[guild.id] = datetime.now(UTC) + timedelta(hours=cooldown_hours)
             total = await self.inventory.award_consumable(guild.id, payload.user_id)
 
@@ -191,9 +190,7 @@ class Coffee(commands.Cog):
             return
         member = guild.get_member(payload.user_id)
         name = member.mention if member else f"<@{payload.user_id}>"
-        await channel.send(
-            f"(≧▽≦) ¡{name} ganó el Café Suelto! Consumibles disponibles: **{total}**."
-        )
+        await channel.send(f"(≧▽≦) ¡{name} ganó el Café de Miki! Cafés disponibles: **{total}**.")
 
     async def _expire_event(
         self, guild_id: int, channel_id: int, message_id: int, duration_seconds: float
@@ -206,7 +203,7 @@ class Coffee(commands.Cog):
         async with self.event_locks.setdefault(guild_id, asyncio.Lock()):
             if self.active_events.get(guild_id) == message_id:
                 self.active_events.pop(guild_id, None)
-                cooldown_hours, _, _, _ = await self._coffee_config(guild_id)
+                cooldown_hours, _, _, _ = await self._coffe_config(guild_id)
                 self.available_at[guild_id] = datetime.now(UTC) + timedelta(hours=cooldown_hours)
 
         channel = guild.get_channel(channel_id)
@@ -215,11 +212,11 @@ class Coffee(commands.Cog):
         try:
             message = await channel.fetch_message(message_id)
             await message.delete()
-            logging.info("Expired coffee event in guild %s", guild_id)
+            logging.info("Expired coffe event in guild %s", guild_id)
         except (discord.NotFound, discord.Forbidden, discord.HTTPException):
-            logging.debug("Could not delete expired coffee event %s", message_id, exc_info=True)
+            logging.debug("Could not delete expired coffe event %s", message_id, exc_info=True)
 
-    async def _coffee_config(
+    async def _coffe_config(
         self, guild_id: int, only_xp: bool = False
     ) -> tuple[float, float, int, int] | int:
         cooldown_hours = await self.guild_settings.get_int(guild_id, "coffee_event_min_wait_hours")
@@ -229,14 +226,14 @@ class Coffee(commands.Cog):
         )
         gift_xp = await self.guild_settings.get_int(guild_id, "coffee_gift_xp")
         if only_xp:
-            return gift_xp if gift_xp is not None else self.inventory.coffee_gift_xp
+            return gift_xp if gift_xp is not None else self.inventory.coffe_gift_xp
         return (
             cooldown_hours if cooldown_hours is not None else self.min_wait_hours,
             duration if duration is not None else self.event_duration_seconds,
             chance_denominator if chance_denominator is not None else self.chance_denominator,
-            gift_xp if gift_xp is not None else self.inventory.coffee_gift_xp,
+            gift_xp if gift_xp is not None else self.inventory.coffe_gift_xp,
         )
 
 
 async def setup(bot):
-    await bot.add_cog(Coffee(bot))
+    await bot.add_cog(Coffe(bot))

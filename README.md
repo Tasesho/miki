@@ -162,13 +162,13 @@ Social Link commands:
 /config social-link experiencia:10   # Admin only
 ```
 
-## Coffee Update
+## Café de Miki
 
-Miki incluye un sistema de consumibles y eventos comunitarios llamado **Café
-Suelto**. Los consumibles se guardan por servidor y usuario, por lo que no se
+Miki incluye un sistema de cafés y eventos comunitarios llamado **Café de Miki**.
+Los cafés se guardan por servidor y usuario, por lo que no se
 mezclan entre servidores ni se pierden al reiniciar el bot.
 
-### Café Suelto
+### Café de Miki
 
 El evento utiliza el canal general configurado mediante `/setup start`.
 
@@ -176,7 +176,7 @@ El evento utiliza el canal general configurado mediante `/setup start`.
 2. Después realiza una sola tirada por minuto.
 3. Con el valor predeterminado, la probabilidad es `1/5` por minuto.
 4. Miki publica un mensaje con la reacción `☕` ya añadida.
-5. El primer usuario que reaccione con `☕` gana un consumible.
+5. El primer usuario que reaccione con `☕` gana un Café de Miki.
 6. El mensaje se elimina automáticamente al terminar su duración.
 
 La reacción de Miki no cuenta como participación y las reacciones con otros
@@ -186,16 +186,16 @@ evento.
 ### Inventario y comandos
 
 ```text
-/cafe inventario
-/cafe usar
-/cafe regalar usuario:@usuario
+/coffe inventario
+/coffe usar
+/coffe regalar usuario:@usuario
 ```
 
-- `/cafe inventario` muestra los consumibles disponibles y la afinidad con Miki.
-- `/cafe usar` consume un objeto y otorga `50 XP` globales.
-- `/cafe regalar` entrega un objeto a otro usuario, otorga `+1` Social Link y
+- `/coffe inventario` muestra los cafés disponibles y la afinidad con Miki.
+- `/coffe usar` consume un café y otorga `50 XP` globales.
+- `/coffe regalar` entrega un café a otro usuario, otorga `+1` Social Link y
   entrega `100 XP` al usuario que hace el regalo.
-- Regalarle un objeto a Miki aumenta la afinidad con Miki, pero no otorga XP global.
+- Regalarle un café a Miki aumenta la afinidad con Miki, pero no otorga XP global.
 - No se permiten regalos a uno mismo ni a otros bots.
 
 ### Configuración desde Discord
@@ -203,7 +203,7 @@ evento.
 Los administradores pueden ejecutar:
 
 ```text
-/setup cafe
+/setup coffe
 ```
 
 El panel permite configurar por servidor:
@@ -211,7 +211,7 @@ El panel permite configurar por servidor:
 - Horas de espera mínima antes de volver a intentar un evento.
 - Duración del mensaje del evento en segundos.
 - Probabilidad `1/N` por minuto después del cooldown.
-- XP otorgada por regalar un consumible a otro usuario.
+- XP otorgada por regalar un café a otro usuario.
 
 Los valores iniciales del entorno son:
 
