@@ -93,18 +93,18 @@ class CafeSetupView(BaseSetupView):
 
     @discord.ui.button(label="Configurar valores", style=discord.ButtonStyle.primary)
     async def configure_button(self, interaction: discord.Interaction, button):
-        cooldown = await self.guild_settings.get_int(
-            self.guild_id, "coffee_event_min_wait_hours"
-        ) or 1
-        duration = await self.guild_settings.get_int(
-            self.guild_id, "coffee_event_duration_seconds"
-        ) or 30
+        cooldown = (
+            await self.guild_settings.get_int(self.guild_id, "coffee_event_min_wait_hours") or 1
+        )
+        duration = (
+            await self.guild_settings.get_int(self.guild_id, "coffee_event_duration_seconds") or 30
+        )
         gift_xp = await self.guild_settings.get_int(self.guild_id, "coffee_gift_xp")
         if gift_xp is None:
             gift_xp = 100
-        chance = await self.guild_settings.get_int(
-            self.guild_id, "coffee_event_chance_denominator"
-        ) or 5
+        chance = (
+            await self.guild_settings.get_int(self.guild_id, "coffee_event_chance_denominator") or 5
+        )
         await interaction.response.send_modal(
             CafeSettingsModal(
                 self.guild_settings, self.guild_id, (cooldown, duration, gift_xp, chance)

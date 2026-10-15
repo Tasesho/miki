@@ -16,6 +16,9 @@ class GuildSettingsService:
         "coffee_event_min_wait_hours": None,
         "coffee_event_chance_denominator": None,
         "coffee_gift_xp": None,
+        "lol_schedule_enabled": "0",
+        "lol_schedule_channel_id": None,
+        "lol_schedule_last_sent_date": None,
     }
 
     def __init__(self, db):

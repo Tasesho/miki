@@ -2,7 +2,12 @@
 
 Miki is a Python Discord bot built with `discord.py`, SQLite, and Docker. The project uses modular Cogs, a shared service layer, repositories for data access, and environment-based configuration for development, staging, and production.
 
-Current release: **Coffee Update — Inventario y Café Suelto**
+Current release: **Worlds Schedule (temporary)**
+
+> [!IMPORTANT]
+> The Worlds schedule feature is temporary for the current tournament. After Worlds,
+> it will be rebuilt to support schedules and announcements for any sports or esports
+> competition. The current commands and data source are specific to League of Legends Worlds.
 
 ## Requirements
 
@@ -42,10 +47,11 @@ GIPHY_API_KEY=
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements.txt
-python -m pip install pytest==8.4.0 pytest-asyncio==1.0.0 ruff==0.11.13
+python -m pip install -e '.[dev]'
 python src/bot.py
 ```
+
+On Windows PowerShell, activate the venv with `.\.venv\Scripts\Activate.ps1`.
 
 ## Docker
 
@@ -126,6 +132,25 @@ Miki currently provides slash commands for profile, weather, GIF search, leaderb
 configuration, Social Links, information, moderation cleanup, word history, and
 utility features. See [Social Links](docs/SOCIAL_LINKS.md) for the relationship rules
 and commands.
+
+### Worlds schedule
+
+> [!IMPORTANT]
+> This Worlds-only update is temporary. A future version will replace it with a
+> configurable competition module for sports and esports beyond Worlds.
+
+`/lol-schedule` shows every Worlds match scheduled for the current day in
+`America/Santiago`, in an embed with local and Discord-adjusted start times.
+Server administrators can use `/lol-schedule-setup` to choose a text channel and
+enable or disable automatic announcements. Miki posts once per day with matches
+between 12:00 and 13:59 Santiago time; days without matches are skipped.
+The setting is disabled until a channel is selected and announcements are enabled.
+
+Schedule data comes from the public LoL Esports website feed. This is an
+undocumented interface, so Riot may change it. The bot reports temporary feed
+errors in `/lol-schedule` and retries automatic delivery on the next minute.
+An optional `LOL_ESPORTS_API_KEY` environment variable overrides the website's
+public feed key if it changes.
 
 Social Link commands:
 

@@ -16,8 +16,8 @@ from services.activity_service import ActivityService
 from services.external_clients import GifClient, WeatherClient
 from services.guild_module_service import GuildModuleService
 from services.guild_settings import GuildSettingsService
-from services.leaderboard_service import LeaderboardService
 from services.inventory_service import InventoryService
+from services.leaderboard_service import LeaderboardService
 from services.profile_service import ProfileService
 from services.social_link_service import SocialLinkService
 from services.trigger_service import TriggerService
@@ -116,6 +116,7 @@ class Application:
             gifs=GifClient(settings.giphy_api_key),
             welcome_cards=WelcomeCardService(self.welcome_cards_repository),
         )
+
     async def startup(self) -> None:
         await self.migrations.run()
         if self.welcome_cards_repository is not None:

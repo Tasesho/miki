@@ -58,9 +58,7 @@ class Settings:
         if coffee_event_duration_seconds <= 0:
             raise ValueError("Coffee event duration must be positive.")
         coffee_event_min_wait_hours = float(os.getenv("COFFEE_EVENT_MIN_WAIT_HOURS", "1"))
-        coffee_event_chance_denominator = int(
-            os.getenv("COFFEE_EVENT_CHANCE_DENOMINATOR", "5")
-        )
+        coffee_event_chance_denominator = int(os.getenv("COFFEE_EVENT_CHANCE_DENOMINATOR", "5"))
         if coffee_event_min_wait_hours <= 0 or coffee_event_chance_denominator <= 0:
             raise ValueError("Coffee event probability settings are invalid.")
 
